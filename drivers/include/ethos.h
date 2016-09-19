@@ -52,6 +52,7 @@ extern "C" {
 #define ETHOS_FRAME_TYPE_TEXT           (0x1)
 #define ETHOS_FRAME_TYPE_HELLO          (0x2)
 #define ETHOS_FRAME_TYPE_HELLO_REPLY    (0x3)
+#define ETHOS_FRAME_TYPE_L7G            (0x5)
 /** @} */
 
 /**
@@ -115,6 +116,41 @@ void ethos_setup(ethos_t *dev, const ethos_params_t *params);
  * @param[in]   frame_type  frame type to use
  */
 void ethos_send_frame(ethos_t *dev, const uint8_t *data, size_t len, unsigned frame_type);
+
+/**
+ * @brief send frame over serial port using ethos' framing
+ *
+ * This is used by e.g., stdio over ethos to send text frames.
+ *
+ * @param[in]   dev         handle of the device to initialize
+ * @param[in]   data        ptr to data to be sent
+ * @param[in]   thislen     nr of bytes to send on this invocation
+ * @param[in]   frame_type  frame type to use
+ */
+void ethos_start_frame(ethos_t *dev, const uint8_t *data, size_t thislen, unsigned frame_type);
+
+/**
+ * @brief send frame over serial port using ethos' framing
+ *
+ * This is used by e.g., stdio over ethos to send text frames.
+ *
+ * @param[in]   dev         handle of the device to initialize
+ * @param[in]   data        ptr to data to be sent
+ * @param[in]   thislen     nr of bytes to send on this invocation
+ */
+void ethos_continue_frame(ethos_t *dev, const uint8_t *data, size_t thislen);
+
+/**
+ * @brief send frame over serial port using ethos' framing
+ *
+ * This is used by e.g., stdio over ethos to send text frames.
+ *
+ * @param[in]   dev         handle of the device to initialize
+ * @param[in]   data        ptr to data to be sent
+ * @param[in]   thislen     nr of bytes to send on this invocation
+ * @param[in]   frame_type  frame type to use
+ */
+void ethos_end_frame(ethos_t *dev);
 
 #ifdef __cplusplus
 }

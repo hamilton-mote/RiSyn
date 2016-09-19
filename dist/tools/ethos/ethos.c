@@ -43,7 +43,7 @@
 
 static void usage(void)
 {
-    fprintf(stderr, "Usage: ethos <tap> <serial> [baudrate]\n");
+    fprintf(stderr, "Usage: ethos <tap> <serial> <baudrate> <l7g>\n");
     fprintf(stderr, "       ethos <tap> tcp:<host> [port]\n");
 }
 
@@ -125,6 +125,7 @@ void set_blocking (int fd, int should_block)
 #define LINE_FRAME_TYPE_TEXT        (0x01)
 #define LINE_FRAME_TYPE_HELLO       (0x02)
 #define LINE_FRAME_TYPE_HELLO_REPLY (0x03)
+#define LINE_FRAME_TYPE_L7G         (0x05)
 /** @} */
 
 typedef enum {
@@ -229,6 +230,11 @@ static int _serial_handle_byte(serial_t *serial, char c)
                 TRACE("esc hello_reply");
                 serial->frametype = LINE_FRAME_TYPE_HELLO_REPLY;
             }
+            else if (c == (LINE_FRAME_TYPE_L7G ^ 0x20)) {
+                 TRACE("esc l7g");
+                 serial->frametype = LINE_FRAME_TYPE_L7G;
+            }
+
             else if (c == LINE_FRAME_DELIMITER) {
                 TRACE("esc -del");
             }
@@ -480,6 +486,11 @@ int _open_connection(char *name, char* option)
     }
 }
 
+void _write_preamble(int fd)
+{
+  char preamble[8] = {0xFF, 0x5d, 0x07, 0xdf, 0x96, 0x04, 0x25, 0x4c};
+  checked_write(fd, preamble, 8);
+}
 int main(int argc, char *argv[])
 {
     char inbuf[MTU];
@@ -487,7 +498,7 @@ int main(int argc, char *argv[])
 
     serial_t serial = {0};
 
-    if (argc < 3) {
+    if (argc < 5) {
         usage();
         return 1;
     }
@@ -509,6 +520,13 @@ int main(int argc, char *argv[])
     if (serial_fd < 0) {
         fprintf(stderr, "Error opening serial device %s\n", argv[2]);
         return 1;
+    }
+
+    int l7g_fd = open(argv[4], O_WRONLY);
+
+    if (l7g_fd < 0) {
+      fprintf(stderr, "Error opening l7g fifo %s\n", argv[4]);
+      return 1;
     }
 
     fd_set readfds;
@@ -559,6 +577,11 @@ int main(int argc, char *argv[])
                                     _clear_neighbor_cache(ifname);
                                 }
                                 break;
+                            case LINE_FRAME_TYPE_L7G:
+                               _write_preamble(l7g_fd);
+                               checked_write(l7g_fd, serial.frame, serial.framebytes);
+                               break;
+
                         }
                         memset(&serial, '\0', sizeof(serial));
                     }

@@ -254,6 +254,53 @@ void ethos_send_frame(ethos_t *dev, const uint8_t *data, size_t len, unsigned fr
     }
 }
 
+void ethos_start_frame(ethos_t *dev, const uint8_t *data, size_t thislen, unsigned frame_type)
+{
+    uint8_t frame_delim = ETHOS_FRAME_DELIMITER;
+
+    if (!irq_is_in()) {
+        mutex_lock(&dev->out_mutex);
+    }
+    else {
+        /* Send frame delimiter. This cancels the current frame,
+         * but enables in-ISR writes.  */
+        uart_write(dev->uart, &frame_delim, 1);
+    }
+
+    /* send frame delimiter */
+    uart_write(dev->uart, &frame_delim, 1);
+
+    /* set frame type */
+    if (frame_type) {
+        uint8_t out[2] = { ETHOS_ESC_CHAR, (frame_type ^ 0x20) };
+        uart_write(dev->uart, out, 2);
+    }
+
+    /* send frame content */
+    while(thislen--) {
+        _write_escaped(dev->uart, *(uint8_t*)data++);
+    }
+}
+void ethos_continue_frame(ethos_t *dev, const uint8_t *data, size_t thislen)
+{
+    /* send frame content */
+    while(thislen--) {
+        _write_escaped(dev->uart, *(uint8_t*)data++);
+    }
+}
+void ethos_end_frame(ethos_t *dev)
+{
+    uint8_t frame_delim = ETHOS_FRAME_DELIMITER;
+
+    /* end of frame */
+    uart_write(dev->uart, &frame_delim, 1);
+
+    if (!irq_is_in()) {
+        mutex_unlock(&dev->out_mutex);
+    }
+}
+
+
 static int _send(netdev2_t *netdev, const struct iovec *vector, unsigned count)
 {
     ethos_t * dev = (ethos_t *) netdev;

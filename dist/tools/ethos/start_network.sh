@@ -29,10 +29,15 @@ start_uhcpd() {
     UHCPD_PID=$!
 }
 
+if [ ! -e /tmp/l7g.fifo ]; then
+  mkfifo /tmp/l7g.fifo
+fi
+
 PORT=$1
 TAP=$2
 PREFIX=$3
 BAUDRATE=115200
+L7G=/tmp/l7g.fifo
 UHCPD="$(readlink -f "${ETHOS_DIR}/../uhcpd/bin")/uhcpd"
 
 [ -z "${PORT}" -o -z "${TAP}" -o -z "${PREFIX}" ] && {
@@ -47,4 +52,4 @@ UHCPD="$(readlink -f "${ETHOS_DIR}/../uhcpd/bin")/uhcpd"
 trap "cleanup" INT QUIT TERM EXIT
 
 
-create_tap && start_uhcpd && "${ETHOS_DIR}/ethos" ${TAP} ${PORT} ${BAUDRATE}
+create_tap && start_uhcpd && "${ETHOS_DIR}/ethos" ${TAP} ${PORT} ${BAUDRATE} ${L7G}
