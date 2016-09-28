@@ -28,6 +28,7 @@
 #include "msg.h"
 #include "ringbuffer.h"
 #include "periph/uart.h"
+#include "uart_stdio.h"
 
 #define SHELL_BUFSIZE       (128U)
 #define UART_BUFSIZE        (128U)
@@ -53,11 +54,11 @@ static int parse_dev(char *arg)
 {
     unsigned dev = (unsigned)atoi(arg);
     if (dev >= UART_NUMOF) {
-        printf("Error: Invalid UART_DEV device specified (%i).\n", dev);
+        printf("Error: Invalid UART_DEV device specified (%u).\n", dev);
         return -1;
     }
     else if (UART_DEV(dev) == UART_STDIO_DEV) {
-        printf("Error: The selected UART_DEV(%i) is used for the shell!\n", dev);
+        printf("Error: The selected UART_DEV(%u) is used for the shell!\n", dev);
         return -2;
     }
     return dev;

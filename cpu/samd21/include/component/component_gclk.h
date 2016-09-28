@@ -114,6 +114,13 @@ typedef union {
 #define GCLK_CLKCTRL_ID_Pos         0            /**< \brief (GCLK_CLKCTRL) Generic Clock Selection ID */
 #define GCLK_CLKCTRL_ID_Msk         (0x3Fu << GCLK_CLKCTRL_ID_Pos)
 #define GCLK_CLKCTRL_ID(value)      ((GCLK_CLKCTRL_ID_Msk & ((value) << GCLK_CLKCTRL_ID_Pos)))
+#define   GCLK_CLKCTRL_ID_GCLK_DFLL48MREF_Val  0x00u   /**< \brief (GCLK_CLKCTRL) DFLL48M Reference */
+#define   GCLK_CLKCTRL_ID_GCLK_DPLL_Val        0x01u   /**< \brief (GCLK_CLKCTRL) FDPLL96M input clock source for reference */
+#define   GCLK_CLKCTRL_ID_GCLK_DPLL32K_Val     0x02u   /**< \brief (GCLK_CLKCTRL) FDPLL96M 32kHz clock for FDPLL96M internal lock timer */
+#define   GCLK_CLKCTRL_ID_GCLK_WDT_Val         0x03u   /**< \brief (GCLK_CLKCTRL) WDT (watch dog timer) */
+#define   GCLK_CLKCTRL_ID_GCLK_RTC_Val         0x04u   /**< \brief (GCLK_CLKCTRL) RTC (real time counter) */
+#define   GCLK_CLKCTRL_ID_GCLK_EIC_Val         0x05u   /**< \brief (GCLK_CLKCTRL) EIC */
+#define   GCLK_CLKCTRL_ID_GCLK_USB_Val         0x06u   /**< \brief (GCLK_CLKCTRL) USB */
 #define GCLK_CLKCTRL_GEN_Pos        8            /**< \brief (GCLK_CLKCTRL) Generic Clock Generator */
 #define GCLK_CLKCTRL_GEN_Msk        (0xFu << GCLK_CLKCTRL_GEN_Pos)
 #define GCLK_CLKCTRL_GEN(value)     ((GCLK_CLKCTRL_GEN_Msk & ((value) << GCLK_CLKCTRL_GEN_Pos)))

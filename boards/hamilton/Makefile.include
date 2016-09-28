@@ -1,6 +1,7 @@
 # define the cpu used by Hamilton
 export CPU = samd21
 export CPU_MODEL = samr21x18a
+CFLAGS += -D__SAMR21E18A__
 
 ## setup the boards dependencies
 include $(RIOTBOARD)/$(BOARD)/Makefile.dep

@@ -20,12 +20,12 @@
 
 #include "auto_init.h"
 
-#ifdef MODULE_CONFIG
-#include "config.h"
-#endif
-
 #ifdef MODULE_BMP180
 #include "bmp180.h"
+#endif
+
+#ifdef MODULE_IO1_XPLAINED
+#include "io1_xplained.h"
 #endif
 
 #ifdef MODULE_SHT11
@@ -97,11 +97,6 @@
 
 void auto_init(void)
 {
-#ifdef MODULE_CONFIG
-    DEBUG("Auto init loading config\n");
-    config_load();
-#endif
-
 #ifdef MODULE_TINYMT32
     random_init(0);
 #endif
@@ -116,6 +111,10 @@ void auto_init(void)
 #ifdef MODULE_BMP180
     DEBUG("Auto init BMP180 module.\n");
     bmp180_auto_init();
+#endif
+#ifdef MODULE_IO1_XPLAINED
+    DEBUG("Auto init IO1 Xplained extension module.\n");
+    io1_xplained_auto_init();
 #endif
 #ifdef MODULE_SHT11
     DEBUG("Auto init SHT11 module.\n");

@@ -82,7 +82,7 @@ void *timer_thread_local(void *arg)
         msg_t m;
         msg_receive(&m);
 
-        uint32_t now = xtimer_now();
+        uint32_t now = xtimer_usec_from_ticks(xtimer_now());
         int sec, min, hr;
         sec = now/1000000;
         min = sec/60;

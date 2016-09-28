@@ -257,10 +257,8 @@ static int _send(netdev2_t *netdev, const struct iovec *vector, unsigned count)
 {
     int pkt_len = 0;
 
-    cc2538_rf_t *dev = (cc2538_rf_t *) netdev;
-    mutex_lock(&dev->mutex);
-
-    /* Flush TX FIFO */
+    /* Flush TX FIFO once no transmission in progress */
+    RFCORE_WAIT_UNTIL(RFCORE->XREG_FSMSTAT1bits.TX_ACTIVE == 0);
     RFCORE_SFR_RFST = ISFLUSHTX;
 
     /* The first byte of the TX FIFO must be the packet length,
@@ -284,17 +282,15 @@ static int _send(netdev2_t *netdev, const struct iovec *vector, unsigned count)
     rfcore_poke_tx_fifo(0, pkt_len + CC2538_AUTOCRC_LEN);
 
     RFCORE_SFR_RFST = ISTXON;
-    mutex_unlock(&dev->mutex);
 
     return pkt_len;
 }
 
 static int _recv(netdev2_t *netdev, void *buf, size_t len, void *info)
 {
-    cc2538_rf_t *dev = (cc2538_rf_t *) netdev;
+    uint8_t corr_val;
+    int8_t rssi_val;
     size_t pkt_len;
-
-    mutex_lock(&dev->mutex);
 
     if (buf == NULL) {
         /* GNRC wants to know how much data we've got for it */
@@ -303,7 +299,6 @@ static int _recv(netdev2_t *netdev, void *buf, size_t len, void *info)
         /* Make sure pkt_len is sane */
         if (pkt_len > CC2538_RF_MAX_DATA_LEN) {
             RFCORE_SFR_RFST = ISFLUSHRX;
-            mutex_unlock(&dev->mutex);
             return -EOVERFLOW;
         }
 
@@ -311,7 +306,6 @@ static int _recv(netdev2_t *netdev, void *buf, size_t len, void *info)
         if (!(rfcore_peek_rx_fifo(pkt_len) & 0x80)) {
             /* CRC failed; discard packet */
             RFCORE_SFR_RFST = ISFLUSHRX;
-            mutex_unlock(&dev->mutex);
             return -ENODATA;
         }
 
@@ -320,7 +314,6 @@ static int _recv(netdev2_t *netdev, void *buf, size_t len, void *info)
             RFCORE_SFR_RFST = ISFLUSHRX;
         }
 
-        mutex_unlock(&dev->mutex);
         return pkt_len - IEEE802154_FCS_LEN;
     }
     else {
@@ -330,21 +323,32 @@ static int _recv(netdev2_t *netdev, void *buf, size_t len, void *info)
 
     rfcore_read_fifo(buf, pkt_len);
 
-    if (info != NULL) {
+    if (info != NULL && RFCORE->XREG_RSSISTATbits.RSSI_VALID) {
         netdev2_ieee802154_rx_info_t *radio_info = info;
-        radio_info->rssi = rfcore_read_byte();
+        rssi_val = rfcore_read_byte() + CC2538_RSSI_OFFSET;
 
-        /* This is not strictly 802.15.4 compliant, since according to
-           the CC2538 documentation, this value will tend between ~50
-           for the lowest quality link detectable by the receiver, and
-           ~110 for the highest. The IEEE 802.15.4 spec mandates that
-           this value be between 0-255, with 0 as lowest quality and
-           255 as the highest. FIXME. */
-        radio_info->lqi = rfcore_read_byte() & 0x7F;
+        RFCORE_ASSERT(rssi_val > CC2538_RF_SENSITIVITY);
+
+        /* The number of dB above maximum sensitivity detected for the
+         * received packet */
+        radio_info->rssi = -CC2538_RF_SENSITIVITY + rssi_val;
+
+        corr_val = rfcore_read_byte() & CC2538_CORR_VAL_MASK;
+
+        if (corr_val < CC2538_CORR_VAL_MIN) {
+            corr_val = CC2538_CORR_VAL_MIN;
+        }
+        else if (corr_val > CC2538_CORR_VAL_MAX) {
+            corr_val = CC2538_CORR_VAL_MAX;
+        }
+
+        /* Interpolate the correlation value between 0 - 255
+         * to provide an LQI value */
+        radio_info->lqi = 255 * (corr_val - CC2538_CORR_VAL_MIN) /
+                          (CC2538_CORR_VAL_MAX - CC2538_CORR_VAL_MIN);
     }
 
     RFCORE_SFR_RFST = ISFLUSHRX;
-    mutex_unlock(&dev->mutex);
 
     return pkt_len;
 }
@@ -358,8 +362,6 @@ static int _init(netdev2_t *netdev)
 {
     cc2538_rf_t *dev = (cc2538_rf_t *) netdev;
     _dev = netdev;
-
-    mutex_lock(&dev->mutex);
 
     uint16_t pan = cc2538_get_pan();
     uint16_t chan = cc2538_get_chan();
@@ -384,8 +386,6 @@ static int _init(netdev2_t *netdev)
 #elif MODULE_GNRC
     dev->netdev.proto = GNRC_NETTYPE_UNDEF;
 #endif
-
-    mutex_unlock(&dev->mutex);
 
     return 0;
 }

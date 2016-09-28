@@ -37,6 +37,10 @@
 extern "C" {
 #endif
 
+#ifndef GNRC_NETDEV2_MAC_PRIO
+#define GNRC_NETDEV2_MAC_PRIO   (THREAD_PRIORITY_MAIN - 5)
+#endif
+
 /**
  * @brief   Type for @ref msg_t if device fired an event
  */
@@ -93,6 +97,16 @@ typedef struct gnrc_netdev2 {
  */
 kernel_pid_t gnrc_netdev2_init(char *stack, int stacksize, char priority,
                                const char *name, gnrc_netdev2_t *gnrc_netdev2);
+
+/**
+ * @brief hskim: Get GNRC netdev2 handler thread ID (for application-driven radio control)
+ *
+ * @param[in] id 
+ *
+ * @return pid of the corresponding thread
+ * @return KERNEL_PID_UNDEF on error
+ */
+kernel_pid_t gnrc_netdev2_getRadioID(uint8_t radio_id);
 
 #ifdef __cplusplus
 }

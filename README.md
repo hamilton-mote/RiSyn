@@ -1,3 +1,40 @@
+# Hamilton-combined v4.1 - September 28nd 2016
+
+Board support for the Hamilton mote is maintained as a set of rebasing branches
+that will at some stage be pushed upstream. At intervals, a "combined" branch
+is created so that working with the hamilton is as easy as cloning this repo.
+The v4.1 branch was created with the following commands
+
+```bash
+git clone https://github.com/hamilton-mote/RIOT-OS.git
+cd RIOT-OS
+git remote add upstream https://github.com/RIOT-OS/RIOT.git
+git checkout origin/master # this was ff2f998
+git checkout -b hamilton-combined-v4.1
+git fetch upstream pull/2309/head:pr-2309
+git fetch upstream pull/5608/head:pr-5608
+git fetch upstream pull/5851/head:pr-5851
+git merge --no-ff pr-2309
+git merge --no-ff pr-5608
+git merge --no-ff pr-5851
+git merge --no-ff origin/hamilton-board
+git merge --no-ff origin/hamilton-at30ts74
+git merge --no-ff origin/hamilton-mma7660
+# this one is very fragile by nature and may need rebasing if you change other things
+git merge --no-ff origin/hamilton-lp-patches
+git push --set-upstream hamilton-combined-v4.1
+```
+
+If you want to contribute, please consider contributing upstream. If that is
+not appropriate (you have hamilton-specific changes) please submit a PR
+as changes on top of master (which will track upstream) as this makes rebasing
+easier. If that is not possible (you are editing hamilton-specific files) you
+can base your PR on a combined branch, but please make clear which version
+you used. We recommend including this information in your branches, such as
+`v4.1-my-features`.
+
+Upstream readme:
+
                           ZZZZZZ
                         ZZZZZZZZZZZZ
                       ZZZZZZZZZZZZZZZZ
@@ -27,7 +64,7 @@
 The friendly Operating System for IoT!
 
 RIOT is a real-time multi-threading operating system that supports a range of
-devices that are typically found in the Internet of Things (IoT): 
+devices that are typically found in the Internet of Things (IoT):
 8-bit, 16-bit and 32-bit microcontrollers.
 
 RIOT is based on the following design principles: energy-efficiency, real-time

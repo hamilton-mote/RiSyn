@@ -153,8 +153,7 @@ int _icmpv6_ping(int argc, char **argv)
     ipv6_addr_t addr;
     kernel_pid_t src_iface;
     msg_t msg;
-    gnrc_netreg_entry_t *ipv6_entry, my_entry = { NULL, ICMPV6_ECHO_REP,
-                                                  thread_getpid() };
+    gnrc_netreg_entry_t my_entry = { NULL, ICMPV6_ECHO_REP, thread_getpid() };
     uint32_t min_rtt = UINT32_MAX, max_rtt = 0;
     uint64_t sum_rtt = 0;
     uint64_t ping_start;
@@ -231,20 +230,13 @@ int _icmpv6_ping(int argc, char **argv)
         return 1;
     }
 
-    ipv6_entry = gnrc_netreg_lookup(GNRC_NETTYPE_IPV6, GNRC_NETREG_DEMUX_CTX_ALL);
-
-    if (ipv6_entry == NULL) {
-        puts("error: ipv6 thread missing");
-        return 1;
-    }
-
     remaining = count;
 
-    ping_start = xtimer_now64();
+    ping_start = xtimer_usec_from_ticks64(xtimer_now64());
 
     while ((remaining--) > 0) {
         gnrc_pktsnip_t *pkt;
-        uint32_t start, stop, timeout = 1 * SEC_IN_USEC;
+        uint32_t start, timeout = 1 * SEC_IN_USEC;
 
         pkt = gnrc_icmpv6_echo_build(ICMPV6_ECHO_REQ, id, ++max_seq_expected,
                                      NULL, payload_len);
@@ -276,8 +268,8 @@ int _icmpv6_ping(int argc, char **argv)
             ((gnrc_netif_hdr_t *)pkt->data)->if_pid = src_iface;
         }
 
-        start = xtimer_now();
-        if (gnrc_netapi_send(ipv6_entry->pid, pkt) < 1) {
+        start = xtimer_usec_from_ticks(xtimer_now());
+        if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_IPV6, GNRC_NETREG_DEMUX_CTX_ALL, pkt)) {
             puts("error: unable to send ICMPv6 echo request\n");
             gnrc_pktbuf_release(pkt);
             continue;
@@ -285,9 +277,10 @@ int _icmpv6_ping(int argc, char **argv)
 
         /* TODO: replace when #4219 was fixed */
         if (xtimer_msg_receive_timeout64(&msg, (uint64_t)timeout) >= 0) {
+            uint32_t stop;
             switch (msg.type) {
                 case GNRC_NETAPI_MSG_TYPE_RCV:
-                    stop = xtimer_now() - start;
+                    stop = xtimer_usec_from_ticks(xtimer_now()) - start;
 
                     gnrc_pktsnip_t *pkt = msg.content.ptr;
                     success += _handle_reply(pkt, stop);
@@ -327,7 +320,7 @@ int _icmpv6_ping(int argc, char **argv)
             xtimer_usleep64(delay * MS_IN_USEC);
         }
         if ((++stat_counter == stat_interval) || (remaining == 0)) {
-            uint64_t total_time = xtimer_now64() - ping_start;
+            uint64_t total_time = xtimer_usec_from_ticks64(xtimer_now64()) - ping_start;
             _print_stats(addr_str, success, (count - remaining), total_time, sum_rtt, min_rtt,
                          max_rtt);
             stat_counter = 0;

@@ -24,7 +24,6 @@
 
 #include <stdbool.h>
 
-#include "mutex.h"
 #include "net/netdev2.h"
 #include "net/netdev2/ieee802154.h"
 
@@ -69,6 +68,13 @@ extern "C" {
 #define OUTPUT_POWER_MIN            (-24)  /**< Min output power in dBm */
 #define OUTPUT_POWER_MAX            (7)    /**< Max output power in dBm */
 #define NUM_POWER_LEVELS            ( OUTPUT_POWER_MAX - OUTPUT_POWER_MIN + 1 )
+
+#define CC2538_CORR_VAL_MIN         (50U)
+#define CC2538_CORR_VAL_MAX         (110U)
+#define CC2538_CORR_VAL_MASK        (0x7F)
+
+#define CC2538_RSSI_OFFSET          (-73)  /**< Signal strength offset value */
+#define CC2538_RF_SENSITIVITY       (-97)  /**< dBm typical, normal conditions */
 
 #define RFCORE_ASSERT(expr) (void)( (expr) || RFCORE_ASSERT_failure(#expr, __FUNCTION__, __LINE__) )
 
@@ -172,7 +178,6 @@ enum {
 typedef struct {
     netdev2_ieee802154_t netdev;  /**< netdev2 parent struct */
     uint8_t state;                /**< current state of the radio */
-    mutex_t mutex;                /**< device access lock */
 } cc2538_rf_t;
 
 /**

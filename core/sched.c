@@ -58,7 +58,7 @@ static void (*sched_cb) (uint32_t timestamp, uint32_t value) = NULL;
 schedstat sched_pidlist[KERNEL_PID_LAST + 1];
 #endif
 
-int sched_run(void)
+int __attribute__((used)) sched_run(void)
 {
     sched_context_switch_request = 0;
 
@@ -80,7 +80,7 @@ int sched_run(void)
     }
 
 #ifdef MODULE_SCHEDSTATISTICS
-    unsigned long time = xtimer_now();
+    unsigned long time = _xtimer_now();
 #endif
 
     if (active_thread) {

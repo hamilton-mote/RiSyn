@@ -48,11 +48,11 @@ int main(void)
     xtimer_set_wakeup(&xtimer, 200000, me);
     xtimer_set_wakeup(&xtimer2, 100000, me);
 
-    printf("now=%" PRIu32 "\n", xtimer_now());
+    printf("now=%" PRIu32 "\n", xtimer_usec_from_ticks(xtimer_now()));
     thread_sleep();
-    printf("now=%" PRIu32 "\n", xtimer_now());
+    printf("now=%" PRIu32 "\n", xtimer_usec_from_ticks(xtimer_now()));
     thread_sleep();
-    printf("now=%" PRIu32 "\n", xtimer_now());
+    printf("now=%" PRIu32 "\n", xtimer_usec_from_ticks(xtimer_now()));
 
     printf("Test completed!\n");
 

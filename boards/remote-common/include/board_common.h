@@ -79,7 +79,8 @@
  */
 #define XTIMER_DEV          TIMER_0
 #define XTIMER_CHAN         (0)
-#define XTIMER_SHIFT        (-4)
+#define XTIMER_SHIFT        (4)
+#define XTIMER_HZ           (16000000UL)
 #define XTIMER_BACKOFF      (50)
 #define XTIMER_ISR_BACKOFF  (40)
 /** @} */

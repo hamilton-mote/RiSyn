@@ -168,7 +168,6 @@ void gnrc_ipv6_demux(kernel_pid_t iface, gnrc_pktsnip_t *current, gnrc_pktsnip_t
         case PROTNUM_ICMPV6:
             DEBUG("ipv6: handle ICMPv6 packet (nh = %u)\n", nh);
             gnrc_icmpv6_demux(iface, pkt);
-            gnrc_pktbuf_release(pkt);
             return;
 #endif
 #ifdef MODULE_GNRC_IPV6_EXT
@@ -195,6 +194,17 @@ void gnrc_ipv6_demux(kernel_pid_t iface, gnrc_pktsnip_t *current, gnrc_pktsnip_t
     }
 
     assert(false);
+}
+
+ipv6_hdr_t *gnrc_ipv6_get_header(gnrc_pktsnip_t *pkt)
+{
+    ipv6_hdr_t *hdr = NULL;
+    gnrc_pktsnip_t *tmp = gnrc_pktsnip_search_type(pkt, GNRC_NETTYPE_IPV6);
+    if ((tmp) && ipv6_hdr_is(tmp->data)) {
+        hdr = ((ipv6_hdr_t*) tmp->data);
+    }
+
+    return hdr;
 }
 
 /* internal functions */
@@ -381,7 +391,7 @@ static void _send_to_iface(kernel_pid_t iface, gnrc_pktsnip_t *pkt)
     if (if_entry->flags & GNRC_IPV6_NETIF_FLAGS_SIXLOWPAN) {
         DEBUG("ipv6: send to 6LoWPAN instead\n");
         if (!gnrc_netapi_dispatch_send(GNRC_NETTYPE_SIXLOWPAN, GNRC_NETREG_DEMUX_CTX_ALL, pkt)) {
-            DEBUG("ipv6: no 6LoWPAN thread found");
+            DEBUG("ipv6: no 6LoWPAN thread found\n");
             gnrc_pktbuf_release(pkt);
         }
         return;

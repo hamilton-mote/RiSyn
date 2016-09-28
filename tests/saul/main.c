@@ -32,7 +32,7 @@
 int main(void)
 {
     phydat_t res;
-    uint32_t last = xtimer_now();
+    xtimer_ticks32_t last_wakeup = xtimer_now();
 
     puts("SAUL test application");
 
