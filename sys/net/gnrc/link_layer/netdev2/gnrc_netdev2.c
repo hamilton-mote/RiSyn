@@ -41,13 +41,6 @@
 
 static void _pass_on_packet(gnrc_pktsnip_t *pkt);
 
-/* hskim: For application-driven radio control */ 
-#ifndef NETDEV2_RADIO_NUM
-#define NETDEV2_RADIO_NUM 1
-#endif
-uint8_t radio_num = 0;
-kernel_pid_t RadioID[NETDEV2_RADIO_NUM];
-
 /**
  * @brief   Function called by the device driver on device events
  *
@@ -137,6 +130,10 @@ static void *_gnrc_netdev2_thread(void *args)
     /* initialize low-level driver */
     dev->driver->init(dev);
 
+	/* hskim: register to netreg */
+	gnrc_netreg_entry_t me_reg = {NULL, GNRC_NETREG_DEMUX_CTX_ALL, gnrc_netdev2->pid};
+	gnrc_netreg_register(GNRC_NETTYPE_LINK, &me_reg);
+
     /* we are working on a MAC to do this properly */
     netopt_state_t sleepstate = NETOPT_STATE_SLEEP;
     dev->driver->set(dev, NETOPT_STATE, &sleepstate, sizeof(netopt_state_t));
@@ -208,15 +205,6 @@ kernel_pid_t gnrc_netdev2_init(char *stack, int stacksize, char priority,
         return -EINVAL;
     }
 
-	/* hskim: for application-driven radio control */
-	RadioID[radio_num] = res;
-	radio_num++;
-
     return res;
 }
 
-/* hskim: for application-driven radio control */ 
-kernel_pid_t gnrc_netdev2_getRadioID(uint8_t id) 
-{
-	return RadioID[id];
-}

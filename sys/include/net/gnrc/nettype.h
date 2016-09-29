@@ -52,6 +52,8 @@ typedef enum {
     GNRC_NETTYPE_NETIF = -1,
     GNRC_NETTYPE_UNDEF = 0,     /**< Protocol is undefined */
 
+	GNRC_NETTYPE_LINK,         /** hskim <Protocol is Link that can control radio */
+
 #ifdef MODULE_GNRC_SIXLOWPAN
     GNRC_NETTYPE_SIXLOWPAN,     /**< Protocol is 6LoWPAN */
 #endif
