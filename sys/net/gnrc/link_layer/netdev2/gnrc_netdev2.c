@@ -130,10 +130,6 @@ static void *_gnrc_netdev2_thread(void *args)
     /* initialize low-level driver */
     dev->driver->init(dev);
 
-	/* hskim: register to netreg */
-	gnrc_netreg_entry_t me_reg = {NULL, GNRC_NETREG_DEMUX_CTX_ALL, gnrc_netdev2->pid};
-	gnrc_netreg_register(GNRC_NETTYPE_LINK, &me_reg);
-
     /* we are working on a MAC to do this properly */
     netopt_state_t sleepstate = NETOPT_STATE_SLEEP;
     dev->driver->set(dev, NETOPT_STATE, &sleepstate, sizeof(netopt_state_t));
