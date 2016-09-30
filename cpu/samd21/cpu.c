@@ -105,7 +105,7 @@ static void clk_init(void)
 #if TIMER_RTT_EN
     // hskim: Setup Clock generator 2 with divider 1 (32.768kHz)
     GCLK->GENDIV.reg  = (GCLK_GENDIV_ID(2)  | GCLK_GENDIV_DIV(0));
-    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(2) | GCLK_GENCTRL_GENEN | GCLK_GENCTRL_DIVSEL |
+    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(2) | GCLK_GENCTRL_GENEN | //GCLK_GENCTRL_DIVSEL |
 #if RTT_RUNSTDBY
                          GCLK_GENCTRL_RUNSTDBY |
 #endif
