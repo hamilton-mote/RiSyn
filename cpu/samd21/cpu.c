@@ -37,16 +37,9 @@ static void clk_init(void)
     PM->APBAMASK.reg &= ~PM_AHBMASK_NVMCTRL;
 #endif
 
-	/* configure internal 8MHz oscillator to run without prescaler */
-    /*SYSCTRL->OSC8M.bit.PRESC = 0;
-    SYSCTRL->OSC8M.bit.ONDEMAND = 0;
-    SYSCTRL->OSC8M.bit.RUNSTDBY = 0;
-    SYSCTRL->OSC8M.bit.ENABLE = 0;*/
-    //while (!(SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_OSC8MRDY)) {}
-
     /* hskim: Main clock setting for hamilton
 	          Step 1) OSCULP32K oscilator feeds Clock generator 1
-              Step 2) Clock generator 1 feeds DFLL48M
+              Step 2) Clock generator 1 feeds DFLL48M (closed loop mode)
               Step 3) DFLL48M feeds Clock generator 0 which is the main clock
        Note: OSCULP32K consumes 115nA and DFLL48M consumes 420uA */
 #if CLOCK_USE_FLL
@@ -62,15 +55,11 @@ static void clk_init(void)
 	/* hskim: 2) Setup Clock generator 1 to feed DFLL48M with 32.768kHz */
     GCLK->CLKCTRL.reg = (GCLK_CLKCTRL_GEN(1) | GCLK_CLKCTRL_CLKEN |
 						 GCLK_CLKCTRL_ID(GCLK_CLKCTRL_ID_DFLL48_Val));
-                         //GCLK_CLKCTRL_ID(GCLK_CLKCTRL_ID_GCLK_DPLL_Val) |
     while (GCLK->STATUS.reg & GCLK_STATUS_SYNCBUSY) {}
 
 	/* hskim: 3) Enable DFLL48M */
 	SYSCTRL->DFLLCTRL.bit.ONDEMAND = 0; // Sleep in STANDBY mode
 	SYSCTRL->DFLLCTRL.bit.RUNSTDBY = 0; // Sleep in STANDBY mode
-	/*SYSCTRL->DFLLVAL.bit.COARSE = ((*((uint32_t*)(SYSCTRL_FUSES_DFLL48M_COARSE_CAL_ADDR)) >>	 			    						SYSCTRL_FUSES_DFLL48M_COARSE_CAL_Pos) &
-									0x3Fu);
-	SYSCTRL->DFLLVAL.bit.FINE = 512;*/
 	SYSCTRL->DFLLCTRL.bit.MODE   = 1;     // Closed loop mode
 	SYSCTRL->DFLLCTRL.bit.QLDIS  = 0;     // Quick lock is enabled
 	SYSCTRL->DFLLCTRL.bit.CCDIS  = 0;	  // Chill cycle is enabled
@@ -81,20 +70,13 @@ static void clk_init(void)
 	SYSCTRL->DFLLCTRL.bit.ENABLE = 1;     // Enable DFLL
     while (!(SYSCTRL->PCLKSR.reg & SYSCTRL_PCLKSR_DFLLRDY)) {} // This can be problematic
 
-    /*SYSCTRL->DPLLRATIO.reg = (SYSCTRL_DPLLRATIO_LDR(CLOCK_PLL_MUL));
-    SYSCTRL->DPLLCTRLB.reg = (SYSCTRL_DPLLCTRLB_REFCLK_GCLK);
-    SYSCTRL->DPLLCTRLA.reg = (SYSCTRL_DPLLCTRLA_ENABLE);
-    while(!(SYSCTRL->DPLLSTATUS.reg &
-           (SYSCTRL_DPLLSTATUS_CLKRDY | SYSCTRL_DPLLSTATUS_LOCK))) {}*/
-
     /* hskim: 4) Setup DFLL48M to feed Clock generator 0 (CPU core clock) */
-    GCLK->GENDIV.reg  = (GCLK_GENDIV_ID(0)  | GCLK_GENDIV_DIV(0)); //CLOCK_PLL_DIV) |
+    GCLK->GENDIV.reg  = (GCLK_GENDIV_ID(0)  | GCLK_GENDIV_DIV(0)); 
     GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(0) | GCLK_GENCTRL_GENEN |
 						 GCLK_GENCTRL_SRC_DFLL48M);
-                         //GCLK_GENCTRL_SRC_FDPLL96M |
 #else
 	/* do not use DFLL48M, use internal 32kHz oscillator directly */
-    GCLK->GENDIV.reg  = (GCLK_GENDIV_ID(0)  | GCLK_GENDIV_DIV(0)); //CLOCK_DIV) |
+    GCLK->GENDIV.reg  = (GCLK_GENDIV_ID(0)  | GCLK_GENDIV_DIV(0));
     GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(0) | GCLK_GENCTRL_GENEN |
                          GCLK_GENCTRL_SRC_OSCULP32K);
 #endif
@@ -105,7 +87,7 @@ static void clk_init(void)
 #if TIMER_RTT_EN
     // hskim: Setup Clock generator 2 with divider 1 (32.768kHz)
     GCLK->GENDIV.reg  = (GCLK_GENDIV_ID(2)  | GCLK_GENDIV_DIV(0));
-    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(2) | GCLK_GENCTRL_GENEN | //GCLK_GENCTRL_DIVSEL |
+    GCLK->GENCTRL.reg = (GCLK_GENCTRL_ID(2) | GCLK_GENCTRL_GENEN | 
 #if RTT_RUNSTDBY
                          GCLK_GENCTRL_RUNSTDBY |
 #endif

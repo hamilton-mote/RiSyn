@@ -89,7 +89,7 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
             mux = I2C_0_MUX;
             clock_source_speed = CLOCK_CORECLOCK;
             sercom_gclk_id = I2C_0_GCLK_ID;
-            sercom_gclk_id_slow = I2C_0_GCLK_ID_SLOW ;
+            sercom_gclk_id_slow = I2C_0_GCLK_ID_SLOW;
             break;
 #endif
         default:
@@ -172,6 +172,7 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
             DEBUG("BAD BAUDRATE\n");
             return -2;
     }
+	//printf("i2c baud: %lu\n", tmp_baud);
 
     /* ENABLE I2C MASTER */
     i2c_poweron(dev);

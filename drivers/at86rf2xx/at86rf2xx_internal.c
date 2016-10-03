@@ -114,6 +114,9 @@ uint8_t at86rf2xx_get_status(const at86rf2xx_t *dev)
     if(dev->state == AT86RF2XX_STATE_SLEEP)
         return dev->state;
 
+	//printf("status %x\n", at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+    //            & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS);
+
     return at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
                 & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS;
 }
@@ -124,11 +127,17 @@ void at86rf2xx_assert_awake(at86rf2xx_t *dev)
 
         /* wake up and wait for transition to TRX_OFF */
         gpio_clear(dev->params.sleep_pin);
-        xtimer_usleep(AT86RF2XX_WAKEUP_DELAY);
+        xtimer_usleep(AT86RF2XX_WAKEUP_DELAY); 
+
+		/** hskim: OSCULP32K is an inaccurate oscilator.
+			   We cannot guarantee state trasition solely depending on timer. 
+	           Instead, we need to explicitly guarantee that the radio state is actually converted */
+		while ((at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
+			   AT86RF2XX_TRX_STATUS__TRX_OFF);
 
         /* update state */
-        dev->state = at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
-                         & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS;
+        dev->state = (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+                         & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS);
     }
 }
 
@@ -136,12 +145,21 @@ void at86rf2xx_hardware_reset(at86rf2xx_t *dev)
 {
     /* wake up from sleep in case radio is sleeping */
     at86rf2xx_assert_awake(dev);
-
+    
     /* trigger hardware reset */
     gpio_clear(dev->params.reset_pin);
-    xtimer_usleep(AT86RF2XX_RESET_PULSE_WIDTH);
+	xtimer_usleep(AT86RF2XX_RESET_PULSE_WIDTH); 
     gpio_set(dev->params.reset_pin);
-    xtimer_usleep(AT86RF2XX_RESET_DELAY);
+	xtimer_usleep(AT86RF2XX_RESET_DELAY);       	
+	
+	/** hskim: OSCULP32K is an inaccurate oscilator.
+		   We cannot guarantee state trasition solely depending on timer. 
+           Instead, we need to explicitly guarantee that the radio state is actually converted */	
+	while ((at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
+			   AT86RF2XX_TRX_STATUS__TRX_OFF &&
+           (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
+			   AT86RF2XX_TRX_STATUS__P_ON);
+	//printf("after reset %x\n", (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS));
 }
 
 void at86rf2xx_configure_phy(at86rf2xx_t *dev)
@@ -232,6 +250,7 @@ void at86rf2xx_get_random(at86rf2xx_t *dev, uint8_t *data, const size_t len)
 
 void at86rf2xx_force_trx_off(const at86rf2xx_t *dev)
 {
+    //while (at86rf2xx_get_status(dev) == AT86RF2XX_STATE_IN_PROGRESS);	
     at86rf2xx_reg_write(dev,
                         AT86RF2XX_REG__TRX_STATE,
                         AT86RF2XX_TRX_STATE__FORCE_TRX_OFF);
