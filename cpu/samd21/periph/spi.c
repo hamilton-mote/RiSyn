@@ -85,14 +85,14 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
         break;
     case SPI_SPEED_5MHZ:
 #if CLOCK_CORECLOCK >= 5000000
-        f_baud = 5000000UL;
+        f_baud = 5000000;
         break;
 #else
         return -1;
 #endif
     case SPI_SPEED_10MHZ:
 #if CLOCK_CORECLOCK >= 10000000
-        f_baud = 10000000UL;
+        f_baud = 10000000;
         break;
 #else
         return -1;

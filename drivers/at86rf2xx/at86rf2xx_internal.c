@@ -132,12 +132,13 @@ void at86rf2xx_assert_awake(at86rf2xx_t *dev)
 		/** hskim: OSCULP32K is an inaccurate oscilator.
 			   We cannot guarantee state trasition solely depending on timer. 
 	           Instead, we need to explicitly guarantee that the radio state is actually converted */
-		while ((at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
+		while ((at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & 
+		        AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
 			   AT86RF2XX_TRX_STATUS__TRX_OFF);
 
         /* update state */
-        dev->state = (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
-                         & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS);
+        dev->state = at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+                         & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS;
     }
 }
 
@@ -155,10 +156,12 @@ void at86rf2xx_hardware_reset(at86rf2xx_t *dev)
 	/** hskim: OSCULP32K is an inaccurate oscilator.
 		   We cannot guarantee state trasition solely depending on timer. 
            Instead, we need to explicitly guarantee that the radio state is actually converted */	
-	while ((at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
-			   AT86RF2XX_TRX_STATUS__TRX_OFF &&
-           (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
-			   AT86RF2XX_TRX_STATUS__P_ON);
+	while ((at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & 
+			AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
+		   AT86RF2XX_TRX_STATUS__TRX_OFF &&
+           (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & 
+		    AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS) !=
+		   AT86RF2XX_TRX_STATUS__P_ON);
 	//printf("after reset %x\n", (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS) & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS));
 }
 
