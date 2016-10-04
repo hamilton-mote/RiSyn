@@ -178,6 +178,7 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
 
     /* Setup clock */
     /* SPI using CLK GEN 0 */
+	/* hskim: We use Clock generator 3 for SPI, which has 6MHz */
     GCLK->CLKCTRL.reg = (GCLK_CLKCTRL_CLKEN |
                          GCLK_CLKCTRL_GEN_GCLK0 |
                          GCLK_CLKCTRL_ID(sercom_gclk_id));
@@ -189,6 +190,7 @@ int spi_init_master(spi_t dev, spi_conf_t conf, spi_speed_t speed)
     spi_dev->CTRLA.reg |= SERCOM_SPI_CTRLA_MODE_SPI_MASTER;
     while (spi_dev->SYNCBUSY.reg) {}// ???? not needed
 
+	//printf("spi baud: %u, baud_F: %lu\n", (uint8_t) (((uint32_t)CLOCK_CORECLOCK) / (2 * f_baud) - 1), f_baud);
     spi_dev->BAUD.bit.BAUD = (uint8_t) (((uint32_t)CLOCK_CORECLOCK) / (2 * f_baud) - 1); /* Synchronous mode*/
 
     spi_dev->CTRLA.reg |= SERCOM_SPI_CTRLA_DOPO(dopo)

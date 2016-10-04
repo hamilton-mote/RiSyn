@@ -187,6 +187,7 @@ void at86rf2xx_tx_prepare(at86rf2xx_t *dev)
     uint8_t state;
 
     dev->pending_tx++;
+	
     /* make sure ongoing transmissions are finished */
     do {
         state = at86rf2xx_get_status(dev);

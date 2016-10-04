@@ -141,10 +141,12 @@ static void *_gnrc_netdev2_thread(void *args)
         /* dispatch NETDEV and NETAPI messages */
         switch (msg.type) {
             case NETDEV2_MSG_TYPE_EVENT:
+				//printf("event is called\n");    			
                 DEBUG("gnrc_netdev2: GNRC_NETDEV_MSG_TYPE_EVENT received\n");
                 dev->driver->isr(dev);
                 break;
             case GNRC_NETAPI_MSG_TYPE_SND:
+				//printf("send is called\n");
                 DEBUG("gnrc_netdev2: GNRC_NETAPI_MSG_TYPE_SND received\n");
                 gnrc_pktsnip_t *pkt = msg.content.ptr;
                 gnrc_netdev2->send(gnrc_netdev2, pkt);
@@ -152,6 +154,7 @@ static void *_gnrc_netdev2_thread(void *args)
             case GNRC_NETAPI_MSG_TYPE_SET:
                 /* read incoming options */
                 opt = msg.content.ptr;
+				//printf("set is called\n");
                 DEBUG("gnrc_netdev2: GNRC_NETAPI_MSG_TYPE_SET received. opt=%s\n",
                         netopt2str(opt->opt));
                 /* set option for device driver */
@@ -164,7 +167,8 @@ static void *_gnrc_netdev2_thread(void *args)
                 break;
             case GNRC_NETAPI_MSG_TYPE_GET:
                 /* read incoming options */
-                opt = msg.content.ptr;
+				//printf("get is called\n");
+    			opt = msg.content.ptr;
                 DEBUG("gnrc_netdev2: GNRC_NETAPI_MSG_TYPE_GET received. opt=%s\n",
                         netopt2str(opt->opt));
                 /* get option from device driver */

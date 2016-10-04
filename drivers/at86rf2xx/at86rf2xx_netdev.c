@@ -78,6 +78,10 @@ static int _init(netdev2_t *netdev)
     gpio_set(dev->params.reset_pin);
     gpio_init_int(dev->params.int_pin, GPIO_IN, GPIO_RISING, _irq_handler, dev);
 
+	/* hskim: initialize dev state according to GPIO settings */ 
+	dev->state = (at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+                         & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS); 
+
     /* make sure device is not sleeping, so we can query part number */
     at86rf2xx_assert_awake(dev);
 
