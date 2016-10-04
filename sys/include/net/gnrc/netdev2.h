@@ -98,6 +98,8 @@ typedef struct gnrc_netdev2 {
 kernel_pid_t gnrc_netdev2_init(char *stack, int stacksize, char priority,
                                const char *name, gnrc_netdev2_t *gnrc_netdev2);
 
+
+
 #ifdef __cplusplus
 }
 #endif

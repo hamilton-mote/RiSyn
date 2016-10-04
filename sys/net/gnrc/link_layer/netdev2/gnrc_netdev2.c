@@ -203,3 +203,4 @@ kernel_pid_t gnrc_netdev2_init(char *stack, int stacksize, char priority,
 
     return res;
 }
+
