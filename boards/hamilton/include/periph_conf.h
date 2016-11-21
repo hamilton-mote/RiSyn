@@ -102,6 +102,7 @@ extern "C" {
 #define TIMER_1_ISR         isr_tc4
 /** @} */
 
+
 /**
  * @name UART configuration
  * @{
@@ -192,6 +193,16 @@ static const pwm_conf_t pwm_config[] = {
 #define I2C_0_MUX           GPIO_MUX_D
 /** @} */
 
+/**
+ * @hskim ADC configuration
+ * @{
+ */
+#define ADC_NUMOF          (1U)
+#define ADC_0_EN            1
+#define ADC_0_DEV           ADC
+#define ADC_0_IRQ           ADC_IRQn
+#define ADC_0_PORT          PORT->Group[0]
+#define ADC_0_INPUT         GPIO_PIN(0,28)
 /**
  * @name Random Number Generator configuration
  * @{
