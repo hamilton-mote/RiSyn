@@ -34,8 +34,6 @@
 
 int adc_init(adc_t channel) {
 
-
-
     /*  Disable ADC Module before init. */
     ADC_DEV->CTRLA.bit.ENABLE = 0;
 
@@ -47,12 +45,12 @@ int adc_init(adc_t channel) {
                                    GCLK_CLKCTRL_GEN_GCLK0 |
                                    (ADC_GCLK_ID << GCLK_CLKCTRL_ID_Pos));
 
-
-   ADC_DEV->CTRLA.bit.SWRST = 1;
-   while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
+    /* Reset */
+    ADC_DEV->CTRLA.bit.SWRST = 1;
+    while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
     /* Set RUN_IN_STANDBY */
-    ADC_DEV->CTRLA.bit.RUNSTDBY = 1;
+    ADC_DEV->CTRLA.bit.RUNSTDBY = 0;
 
     /* Set Voltage Reference */
     ADC_DEV->REFCTRL.bit.REFSEL  = ADC_REFCTRL_REFSEL_INT1V_Val;
@@ -60,17 +58,17 @@ int adc_init(adc_t channel) {
 
     /* Set the accumulation and divide result */
     ADC_DEV->AVGCTRL.bit.SAMPLENUM = 6;
-	  ADC_DEV->AVGCTRL.bit.ADJRES    = 4;//ADC_AVGCTRL_ADJRES(divideResult) | accumulate;
+	ADC_DEV->AVGCTRL.bit.ADJRES    = 4;
 
     /* Set Sample length */
-    ADC_DEV->SAMPCTRL.bit.SAMPLEN = 32;//ADC_SAMPCTRL_SAMPLEN(ADC_0_SAMPLE_LENGTH);
-	  while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
+    ADC_DEV->SAMPCTRL.bit.SAMPLEN = 32;
+	while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
     /* Configure CTRLB Register HERE IS THE RESOLUTION SET!*/
     ADC_DEV->CTRLB.bit.DIFFMODE  = 0;
     ADC_DEV->CTRLB.bit.FREERUN   = 0;
     ADC_DEV->CTRLB.bit.CORREN    = 0;
-    ADC_DEV->CTRLB.bit.LEFTADJ   = 1; // Left-adjusted results
+    ADC_DEV->CTRLB.bit.LEFTADJ   = 0; // Right-adjusted results
     ADC_DEV->CTRLB.bit.RESSEL    = ADC_CTRLB_RESSEL_12BIT_Val;
     ADC_DEV->CTRLB.bit.PRESCALER = ADC_CTRLB_PRESCALER_DIV512_Val;
     while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
@@ -94,8 +92,8 @@ int adc_init(adc_t channel) {
     pg->PMUX[pin >> 1].reg &= ~(0xf << (4 * (pin & 0x1)));
   	pg->PMUX[pin >> 1].reg |= (PORT_PMUX_PMUXE_B_Val << (4 * (pin & 0x1)));
 
-	  ADC_DEV->INPUTCTRL.bit.MUXNEG      = ADC_INPUTCTRL_MUXNEG_IOGND_Val;
-	  while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
+    ADC_DEV->INPUTCTRL.bit.MUXNEG      = ADC_INPUTCTRL_MUXNEG_IOGND_Val;
+    while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
     /* Configure Window Mode Register */
     ADC_DEV->WINCTRL.reg = ADC_WINCTRL_WINMODE_DISABLE;
@@ -103,13 +101,10 @@ int adc_init(adc_t channel) {
 
     /* Enable interrupts and events related to result */
     ADC_DEV->EVCTRL.bit.RESRDYEO = 1;
-    //ADC_0_DEV->INTENCLR.bit.RESRDY = 1;
     ADC_DEV->INTENSET.bit.RESRDY = 1;
 
-	  /* ADC runs during debug mode */
+	/* ADC runs during debug mode */
     ADC_DEV->DBGCTRL.bit.DBGRUN = 1;
-
-    //ADC_DEV->CTRLA.bit.SWRST = 1;
     while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
     return 0;
@@ -121,11 +116,10 @@ int adc_sample(adc_t channel, adc_res_t res){
 	int output;
 
 	/* Set input channel for ADC */
-  int chan = ADC_GET_CHANNEL(channel);
-  ADC_DEV->INPUTCTRL.bit.MUXPOS = chan;
+    int chan = ADC_GET_CHANNEL(channel);
+    ADC_DEV->INPUTCTRL.bit.MUXPOS = chan;
 
-
-	/*  Enable bandgap */
+	/*  Enable bandgap: It is enabled temporarily during sampling procedure to minimize idle current */
 	SYSCTRL->VREF.reg |= SYSCTRL_VREF_BGOUTEN;
 
 	/* Set resolution */
@@ -151,9 +145,7 @@ int adc_sample(adc_t channel, adc_res_t res){
 	while (ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
 	/* Enable ADC Module. */
-//	ADC_DEV->CTRLA.bit.SWRST = 1;
-//	while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
-  ADC_DEV->CTRLA.bit.ENABLE = 1;
+    ADC_DEV->CTRLA.bit.ENABLE = 1;
 	while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
 	/* Start the conversion. */
@@ -166,11 +158,11 @@ int adc_sample(adc_t channel, adc_res_t res){
 	output = (int)ADC_DEV->RESULT.reg;
 	while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
-  //ADC_DEV->CTRLA.bit.ENABLE = 0;
+    ADC_DEV->CTRLA.bit.ENABLE = 0;
 	while(ADC_DEV->STATUS.reg & ADC_STATUS_SYNCBUSY);
 
 	/*  Disable bandgap */
-	//SYSCTRL->VREF.reg &= ~SYSCTRL_VREF_BGOUTEN;
+	SYSCTRL->VREF.reg &= ~SYSCTRL_VREF_BGOUTEN;
 
 	/* Return result. */
 	return output;
