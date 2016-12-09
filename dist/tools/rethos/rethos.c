@@ -344,7 +344,7 @@ static serial_event_t _serial_handle_byte(serial_t *serial, char c)
 
     switch (serial->state) {
         case WAIT_FRAMESTART:
-            fprintf(stderr, "Got stray byte %c\n", c);
+            fprintf(stderr, "Got stray byte 0x%X\n", (uint8_t) c);
             break;
         case WAIT_FRAMETYPE:
             serial->frametype = (uint8_t) c;
@@ -838,6 +838,8 @@ int main(int argc, char *argv[])
         check_fatal_error("Could not set stats timer");
     }
 
+    printf("Starting REthos event loop\n");
+
     while (true) {
         int activity;
         int max_fd = 0;
@@ -924,13 +926,18 @@ int main(int argc, char *argv[])
                                  * the last packet we received.
                                  */
                                 if (serial.rexmit_acked) {
-                                    if (serial.received_data_frame)
-                                    {
+                                    if (serial.received_data_frame) {
                                         rethos_send_ack_frame(&serial, serial.last_rcvd_seqno);
+
+                                        printf("Got NACK (unexpected, retransmitted ACK 0x%X)\n", serial.last_rcvd_seqno);
+                                    } else {
+                                        printf("Got NACK (unexpected, doing nothing)\n");
                                     }
                                 } else {
                                     /* Retransmit the last frame that was sent. */
                                     rethos_rexmit_data_frame(&serial);
+
+                                    printf("Got NACK (expected, retransmitted frame 0x%X)\n", serial.rexmit_seqno);
                                 }
                                 continue;
                             } else if (serial.frametype == RETHOS_FRAME_TYPE_ACK) {
@@ -938,10 +945,14 @@ int main(int argc, char *argv[])
                                     /* Mark the frame to be retransmitted as having been ACKed so we don't retransmit it on timeout. */
                                     serial.rexmit_acked = true;
 
+                                    printf("Got ACK 0x%X (expected)\n", serial.in_seqno);
+
                                     /* Cancel the pending rexmit timer. */
                                     if (timer_settime(rexmit_timer, 0, &cancel_timer_spec, NULL) == -1) {
                                         check_fatal_error("Could not cancel rexmit timer");
                                     }
+                                } else {
+                                    printf("Got ACK 0x%X (unexpected, last sent 0x%X)\n", serial.in_seqno, serial.rexmit_seqno);
                                 }
                                 continue;
                             }
@@ -954,6 +965,7 @@ int main(int argc, char *argv[])
 
                         /* If it's a duplicate, just drop the frame. */
                         if (serial.in_seqno == serial.last_rcvd_seqno) {
+                            printf("Got duplicate frame 0x%X on channel %d (sent ACK)\n", serial.in_seqno, serial.channel);
                             continue;
                         }
 
@@ -961,7 +973,7 @@ int main(int argc, char *argv[])
                         stats.global.lost_frames += (serial.in_seqno - serial.last_rcvd_seqno - 1);
                         serial.last_rcvd_seqno = serial.in_seqno;
 
-                        printf("Got a frame on channel %d\n", serial.channel);
+                        printf("Got frame 0x%X on channel %d (sent ACK)\n", serial.in_seqno, serial.channel);
 
                         if (serial.channel == STDIN_CHANNEL) {
                             checked_write(STDOUT_FILENO, serial.frame, serial.numbytes);
@@ -986,6 +998,8 @@ int main(int argc, char *argv[])
 
                         /* Send a NACK. */
                         rethos_send_nack_frame(&serial);
+
+                        printf("Got bad frame (sent NACK)\n");
                     }
                 }
             }
@@ -1050,6 +1064,8 @@ int main(int argc, char *argv[])
                     rethos_send_data_frame(&serial, inbuf, res, i);
                     stats.channel[i].serial_forwarded++;
                     stats.global.domain_forwarded++;
+
+                    printf("Sent frame 0x%X\n", serial.out_seqno);
                 }
             }
         }
