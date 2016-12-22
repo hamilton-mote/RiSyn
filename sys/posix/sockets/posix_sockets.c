@@ -37,6 +37,9 @@
 #ifdef  MODULE_CONN_TCP
 #   include "net/conn/tcp.h"
 #endif  /* MODULE_CONN_TCP */
+#ifdef  MODULE_CONN_TCP_FREEBSD
+#   include "net/conn/tcp_freebsd.h"
+#endif
 #ifdef  MODULE_CONN_UDP
 #   include "net/conn/udp.h"
 #endif  /* MODULE_CONN_UDP */
@@ -56,6 +59,9 @@ typedef union {
 #ifdef  MODULE_CONN_TCP
     conn_tcp_t tcp;             /**< TCP connection */
 #endif  /* MODULE_CONN_TCP */
+#ifdef  MODULE_CONN_TCP_FREEBSD
+    conn_tcp_freebsd_t tcp;
+#endif
 #ifdef  MODULE_CONN_UDP
     conn_udp_t udp;             /**< UDP connection */
 #endif  /* MODULE_CONN_UDP */
@@ -100,7 +106,7 @@ static socket_t *_get_socket(int fd)
 static inline int _choose_ipproto(int type, int protocol)
 {
     switch (type) {
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
             if ((protocol == 0) || (protocol == IPPROTO_TCP)) {
                 return protocol;
@@ -206,9 +212,9 @@ static int _implicit_bind(socket_t *s, void *addr)
         best_match = &unspec;
     }
     switch (s->type) {
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
-            res = conn_tcp_create(&s->conn.udp, best_match, sizeof(unspec),
+            res = conn_tcp_create(&s->conn.tcp, best_match, sizeof(unspec),
                                   s->domain, s->src_port);
             break;
 #endif
@@ -255,7 +261,7 @@ static int socket_close(int socket)
                         conn_ip_close(&s->conn.raw);
                         break;
 #endif
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
                     case SOCK_STREAM:
                         conn_tcp_close(&s->conn.tcp);
                         break;
@@ -340,9 +346,9 @@ int accept(int socket, struct sockaddr *restrict address,
     /* May be kept unassigned if no conn module is available */
     /* cppcheck-suppress unassignedVariable */
     struct sockaddr_storage tmp;
-    void *addr;
-    uint16_t *port;
-    socklen_t tmp_len;
+    void *addr = NULL;
+    uint16_t *port = NULL;
+    socklen_t tmp_len = 0;
     mutex_lock(&_pool_mutex);
     s = _get_socket(socket);
     if (s == NULL) {
@@ -379,8 +385,15 @@ int accept(int socket, struct sockaddr *restrict address,
             break;
     }
     switch (s->type) {
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
+#ifdef MODULE_CONN_TCP_FREEBSD
+            if (s->domain != AF_INET6) {
+                errno = EPROTO;
+                res = -1;
+                break;
+            }
+#endif
             new_s = _get_free_socket();
             if (new_s == NULL) {
                 errno = ENFILE;
@@ -401,17 +414,19 @@ int accept(int socket, struct sockaddr *restrict address,
                     break;
                 }
                 else {
-                    new_s->fd = res = fd;
+                    new_s->fd = fd;
                 }
                 new_s->domain = s->domain;
                 new_s->type = s->type;
                 new_s->protocol = s->protocol;
+                new_s->bound = true;
                 tmp.ss_family = s->domain;
-                if ((res = conn_tcp_getpeeraddr(&s->conn.tcp, addr, port)) < 0) {
+                if ((res = conn_tcp_getpeeraddr(&new_s->conn.tcp, addr, port)) < 0) {
                     errno = -res;
                     res = -1;
                     break;
                 }
+                res = fd;
                 *port = htons(*port); /* XXX: sin(6)_port is supposed to be
                                          network byte order */
                 *address_len = _addr_truncate(address, *address_len, &tmp, tmp_len);
@@ -458,7 +473,7 @@ int bind(int socket, const struct sockaddr *address, socklen_t address_len)
             }
             break;
 #endif
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
             if ((res = conn_tcp_create(&s->conn.tcp, addr, addr_len, s->domain,
                                        byteorder_ntohs(port))) < 0) {
@@ -512,7 +527,7 @@ int connect(int socket, const struct sockaddr *address, socklen_t address_len)
         return -1;
     }
     switch (s->type) {
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
             /* "If the socket has not already been bound to a local address,
              * connect() shall bind it to an address which, unless the socket's
@@ -586,7 +601,7 @@ int getpeername(int socket, struct sockaddr *__restrict address,
         return -1;
     }
     switch (s->type) {
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
             if ((res = conn_tcp_getpeeraddr(&s->conn.tcp, addr, port)) < 0) {
                 errno = -res;
@@ -670,7 +685,7 @@ int getsockname(int socket, struct sockaddr *__restrict address,
             }
             break;
 #endif
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
             if ((res = conn_tcp_getlocaladdr(&s->conn.tcp, addr, port)) < 0) {
                 errno = -res;
@@ -704,7 +719,7 @@ int listen(int socket, int backlog)
         case AF_INET:
         case AF_INET6:
             switch (s->type) {
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
                 case SOCK_STREAM:
                     if ((res = conn_tcp_listen(&s->conn.tcp, backlog)) < 0) {
                         errno = -res;
@@ -800,7 +815,7 @@ ssize_t recvfrom(int socket, void *restrict buffer, size_t length, int flags,
             }
             break;
 #endif
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
             if ((res = conn_tcp_recv(&s->conn.tcp, buffer, length)) < 0) {
                 errno = -res;
@@ -888,7 +903,7 @@ ssize_t sendto(int socket, const void *buffer, size_t length, int flags,
             }
             break;
 #endif
-#ifdef MODULE_CONN_TCP
+#if defined(MODULE_CONN_TCP) || defined(MODULE_CONN_TCP_FREEBSD)
         case SOCK_STREAM:
             if (!s->bound) {
                 errno = ENOTCONN;

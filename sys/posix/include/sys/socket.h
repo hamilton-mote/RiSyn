@@ -94,6 +94,16 @@ extern "C" {
 #define SO_TYPE         (15)    /**< Socket type. */
 /** @} */
 
+/**
+ * @name    Socket shutdown options
+ * @brief   Parameter to shutdown()
+ * @{
+ */
+#define SHUT_RD         (0)
+#define SHUT_WR         (1)
+#define SHUT_RDWR       (2)
+/** @} */
+
 typedef unsigned short sa_family_t;   /**< address family type */
 
 /**

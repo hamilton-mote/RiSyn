@@ -24,9 +24,14 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "cib.h"
+#include "condition.h"
+#include "mutex.h"
 #include "net/ipv6/addr.h"
 #include "net/gnrc.h"
 #include "sched.h"
+
+#include "net/tcp_freebsd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,6 +74,53 @@ struct conn_udp {
     gnrc_netreg_entry_t netreg_entry;           /**< @p net_ng_netreg entry for the connection */
     uint8_t local_addr[sizeof(ipv6_addr_t)];    /**< local IP address */
     size_t local_addr_len;                      /**< length of struct conn_ip::local_addr */
+};
+
+struct conn_tcp_freebsd_send_state {
+    size_t buflen;
+    struct conn_tcp_freebsd_send_state* next;
+    struct lbufent entry;
+};
+
+struct conn_tcp_freebsd_accept_queue_entry {
+    int asockid;
+    void* recvbuf;
+};
+
+struct conn_tcp_freebsd {
+    gnrc_nettype_t l3_type;
+    gnrc_nettype_t l4_type;
+    gnrc_netreg_entry_t netreg_entry; // to follow the inheritance
+
+    ipv6_addr_t local_addr;
+    uint16_t local_port;
+
+    mutex_t lock;
+    union {
+        struct {
+            int asock;
+            void* recvbuf;
+            mutex_t connect_lock;
+            condition_t connect_cond;
+            condition_t receive_cond;
+            condition_t send_cond;
+
+            struct conn_tcp_freebsd_send_state* send_head;
+            struct conn_tcp_freebsd_send_state* send_tail;
+            size_t in_send_buffer;
+        } active;
+        struct {
+            int psock;
+            condition_t accept_cond;
+
+            /* Circular buffer for accept queue. */
+            cib_t accept_cib;
+            int* accept_queue;
+        } passive;
+    } sfields; /* specific fields */
+    int errstat;
+    bool hasactive;
+    bool haspassive;
 };
 
 /**
