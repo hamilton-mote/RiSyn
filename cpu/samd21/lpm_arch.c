@@ -85,7 +85,8 @@ enum lpm_mode last_mode = current_mode;
             start_lpm();
             break;
         case LPM_OFF:                   /* Standby Mode - Potential Wake Up sources: Asynchronous */
-            current_mode = LPM_OFF;
+            current_mode = LPM_OFF;	
+
             /* Standby Mode */
             SCB->SCR |=  SCB_SCR_SLEEPDEEP_Msk;
             start_lpm();

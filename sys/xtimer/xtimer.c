@@ -83,6 +83,7 @@ void _xtimer_periodic_wakeup(uint32_t *last_wakeup, uint32_t period) {
         }
     }
 
+
     /*
      * For large offsets, set an absolute target time.
      * As that might cause an underflow, for small offsets, set a relative

@@ -110,7 +110,7 @@ void at86rf2xx_fb_stop(const at86rf2xx_t *dev)
 
 uint8_t at86rf2xx_get_status(const at86rf2xx_t *dev)
 {
-    /* if sleeping immediately return state */
+	/* if sleeping immediately return state */
     if(dev->state == AT86RF2XX_STATE_SLEEP)
         return dev->state;
 
@@ -124,7 +124,7 @@ void at86rf2xx_assert_awake(at86rf2xx_t *dev)
 
         /* wake up and wait for transition to TRX_OFF */
         gpio_clear(dev->params.sleep_pin);
-        xtimer_usleep(AT86RF2XX_WAKEUP_DELAY);
+        //xtimer_usleep(AT86RF2XX_WAKEUP_DELAY);
 
         /* on some platforms, the timer behind xtimer may be inaccurate
          * or the radio itself may take longer to wake up due to extra

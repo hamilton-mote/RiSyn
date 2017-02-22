@@ -92,6 +92,8 @@ extern "C" {
  */
 #define GNRC_NETAPI_MSG_TYPE_ACK        (0x0205)
 
+
+
 /**
  * @brief   Data structure to be send for setting (@ref GNRC_NETAPI_MSG_TYPE_SET)
  *          and getting (@ref GNRC_NETAPI_MSG_TYPE_GET) options

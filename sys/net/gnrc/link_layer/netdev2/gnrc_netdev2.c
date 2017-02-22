@@ -15,6 +15,7 @@
  *
  * @author      Hauke Petersen <hauke.petersen@fu-berlin.de>
  * @author      Kaspar Schleiser <kaspar@schleiser.de>
+ * @author      Hyung-Sin Kim <hs.kim@schleiser.de>
  * @}
  */
 
@@ -29,6 +30,8 @@
 
 #include "net/gnrc/netdev2.h"
 #include "net/ethernet/hdr.h"
+
+#include "xtimer.h"
 
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
@@ -102,6 +105,7 @@ static void _pass_on_packet(gnrc_pktsnip_t *pkt)
  *
  * @param[in] args  expects a pointer to the underlying netdev device
  *
+
  * @return          never returns
  */
 static void *_gnrc_netdev2_thread(void *args)
@@ -133,7 +137,7 @@ static void *_gnrc_netdev2_thread(void *args)
     /* we are working on a MAC to do this properly */
     netopt_state_t sleepstate = NETOPT_STATE_SLEEP;
     dev->driver->set(dev, NETOPT_STATE, &sleepstate, sizeof(netopt_state_t));
-
+	
     /* start the event loop */
     while (1) {
         DEBUG("gnrc_netdev2: waiting for incoming messages\n");
@@ -146,8 +150,9 @@ static void *_gnrc_netdev2_thread(void *args)
                 break;
             case GNRC_NETAPI_MSG_TYPE_SND:
                 DEBUG("gnrc_netdev2: GNRC_NETAPI_MSG_TYPE_SND received\n");
+				/* Send a packet */
                 gnrc_pktsnip_t *pkt = msg.content.ptr;
-                gnrc_netdev2->send(gnrc_netdev2, pkt);
+		        gnrc_netdev2->send(gnrc_netdev2, pkt);
                 break;
             case GNRC_NETAPI_MSG_TYPE_SET:
                 /* read incoming options */

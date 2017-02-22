@@ -94,6 +94,9 @@ extern "C" {
  * @{
  */
 #define AT86RF2XX_STATE_P_ON         (0x00)     /**< initial power on */
+#define AT86RF2XX_STATE_BUSY_RX      (0x01)     /**< busy receiving data */
+#define AT86RF2XX_STATE_BUSY_TX      (0x02)     /**< busy transmitting data */
+#define AT86RF2XX_STATE_RX_ON        (0x06)     /**< wait for incoming data */
 #define AT86RF2XX_STATE_TRX_OFF      (0x08)     /**< idle */
 #define AT86RF2XX_STATE_PLL_ON       (0x09)     /**< ready to transmit */
 #define AT86RF2XX_STATE_SLEEP        (0x0f)     /**< sleep mode */
@@ -115,6 +118,7 @@ extern "C" {
 #define AT86RF2XX_OPT_SRC_ADDR_LONG  (NETDEV2_IEEE802154_SRC_MODE_LONG) /**< legacy define */
 #define AT86RF2XX_OPT_RAWDUMP        (NETDEV2_IEEE802154_RAW)           /**< legacy define */
 #define AT86RF2XX_OPT_AUTOACK        (NETDEV2_IEEE802154_ACK_REQ)       /**< legacy define */
+#define AT86RF2XX_OPT_ACK_PENDING    (NETDEV2_IEEE802154_FRAME_PEND)       /**< legacy define */
 
 #define AT86RF2XX_OPT_CSMA           (0x0100)       /**< CSMA active */
 #define AT86RF2XX_OPT_PROMISCUOUS    (0x0200)       /**< promiscuous mode
@@ -127,6 +131,9 @@ extern "C" {
 #define AT86RF2XX_OPT_TELL_RX_START  (0x2000)       /**< notify MAC layer on RX
                                                      *   start */
 #define AT86RF2XX_OPT_TELL_RX_END    (0x4000)       /**< notify MAC layer on RX
+                                                     *   finished */
+#define AT86RF2XX_OPT_TELL_AMI       (0x8000)       /**< notify MAC layer on Address matching */
+#define AT86RF2XX_OPT_TELL_CCA_DONE  (0x9000)       /**< notify MAC layer on CCA
                                                      *   finished */
 /** @} */
 

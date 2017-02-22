@@ -90,6 +90,7 @@ typedef enum {
                                  *   the current state */
     NETOPT_AUTOACK,             /**< en/disable link layer auto ACKs or read
                                  *   the current state */
+    NETOPT_ACK_PENDING,         /**< en/disable link layer ACKs with pending bit */
     NETOPT_ACK_REQ,             /**< en/disable acknowledgement requests or
                                  *   read the current state */
     NETOPT_RETRANS,             /**< get/set the maximum number of
@@ -139,6 +140,15 @@ typedef enum {
      * @note not all transceivers may support this interrupt
      */
     NETOPT_TX_END_IRQ,
+    /**
+     * @brief en/disable the interrupt after packet transmission.
+     *
+     * This interrupt is triggered when the full packet is transmitted.
+     *
+     * @note not all transceivers may support this interrupt
+     */
+    NETOPT_AMI_IRQ,
+
 
     /**
      * @brief Check automatically before sending if the channel is clear.
@@ -239,6 +249,11 @@ typedef enum {
      *
      */
     NETOPT_RF_TESTMODE,
+
+    /**
+     * @brief   en/disable radio duty-cycling
+     */
+	NETOPT_DUTYCYCLE,
 
     /* add more options if needed */
 

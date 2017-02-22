@@ -113,12 +113,13 @@ static const uart_conf_t uart_config[] = {
  * @name ADC configuration
  * @{
  */
-#define ADC_NUMOF          (1U)
+#define ADC_NUMOF           (1U)
+#define ADC_DEV             ADC
+//#define ADC_IRQ           ADC_IRQn
 #define ADC_0_EN            1
-#define ADC_0_DEV           ADC
-#define ADC_0_IRQ           ADC_IRQn
-//#define ADC_0_PORT          PORT->Group[0]
-//#define ADC_0_INPUT         GPIO_PIN(0,28)
+#define ADC_0_PORT          PORT->Group[0]
+#define ADC_0_PIN           (8)                            // PA08 (light sensor)
+#define ADC_0_INPUT_CHANNEL ADC_INPUTCTRL_MUXPOS_PIN16_Val // PA08 = ADC16
 /** @} */
 
 /**
@@ -229,6 +230,19 @@ static const pwm_conf_t pwm_config[] = {
 #define RTT_FREQUENCY       (32768U)    /* in Hz. For changes see `rtt.c` */
 #define RTT_RUNSTDBY        (1)         /* Keep RTT running in sleep states */
 /** @} */
+
+/**
+ * @name Network configuration
+ * @{
+ */
+#define DUTYCYCLE_EN               (1)
+#define DUTYCYCLE_SLEEP_INTERVAL   2000000UL
+#define DUTYCYCLE_WAKEUP_INTERVAL  5000UL
+#define ROUTER    (0)        /* Plugged-in router */
+#define LEAF_NODE (1-ROUTER) /* Duty-cycling node */
+#define AUTO_CSMA_EN               (0)
+/** @} */
+
 
 #ifdef __cplusplus
 }

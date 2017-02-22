@@ -47,7 +47,7 @@ int timer_init(tim_t dev, unsigned long freq, timer_cb_t cb, void *arg)
 {
 
 /* If the RTT is enabled, configure GCLK2 as the source */
-#ifdef TIMER_RTT_EN
+#if TIMER_RTT_EN
     GCLK->CLKCTRL.reg = (uint16_t) (GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK2 | GCLK_CLKCTRL_ID(RTC_GCLK_ID));
 #endif
 

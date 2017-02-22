@@ -60,11 +60,19 @@ void auto_init_at86rf2xx(void)
             DEBUG("Error initializing AT86RF2xx radio device!\n");
         }
         else {
+#if DUTYCYCLE_EN
+            gnrc_netdev2_dutymac_init(_at86rf2xx_stacks[i],
+                                   AT86RF2XX_MAC_STACKSIZE,
+                                   AT86RF2XX_MAC_PRIO,
+                                   "at86rf2xx",
+                                   &gnrc_adpt[i]);
+#else
             gnrc_netdev2_init(_at86rf2xx_stacks[i],
                               AT86RF2XX_MAC_STACKSIZE,
                               AT86RF2XX_MAC_PRIO,
                               "at86rf2xx",
                               &gnrc_adpt[i]);
+#endif
         }
     }
 }

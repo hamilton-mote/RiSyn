@@ -364,10 +364,28 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
                 tmp &= ~(AT86RF2XX_CSMA_SEED_1__AACK_DIS_ACK);
                 at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
                 break;
+            case AT86RF2XX_OPT_ACK_PENDING:
+                DEBUG("[at86rf2xx] opt: enabling pending ACKs\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
+                tmp |= AT86RF2XX_CSMA_SEED_1__AACK_SET_PD;
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
+                break;
             case AT86RF2XX_OPT_TELL_RX_START:
                 DEBUG("[at86rf2xx] opt: enabling SFD IRQ\n");
                 tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_MASK);
                 tmp |= AT86RF2XX_IRQ_STATUS_MASK__RX_START;
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK, tmp);
+                break;            
+			case AT86RF2XX_OPT_TELL_AMI:
+                DEBUG("[at86rf2xx] opt: enabling AMI IRQ\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_MASK);
+                tmp |= AT86RF2XX_IRQ_STATUS_MASK__AMI;
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK, tmp);
+                break;
+			case AT86RF2XX_OPT_TELL_CCA_DONE:
+                DEBUG("[at86rf2xx] opt: enabling CCA_ED IRQ\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_MASK);
+                tmp |= AT86RF2XX_IRQ_STATUS_MASK__CCA_ED_DONE;
                 at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK, tmp);
                 break;
             default:
@@ -405,6 +423,12 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
                 tmp |= AT86RF2XX_CSMA_SEED_1__AACK_DIS_ACK;
                 at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
                 break;
+            case AT86RF2XX_OPT_ACK_PENDING:
+                DEBUG("[at86rf2xx] opt: disabling ACK pending\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
+                tmp &= ~(AT86RF2XX_CSMA_SEED_1__AACK_SET_PD);
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
+                break;
             case AT86RF2XX_OPT_TELL_RX_START:
                 DEBUG("[at86rf2xx] opt: disabling SFD IRQ\n");
                 tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_MASK);
@@ -429,7 +453,9 @@ static inline void _set_state(at86rf2xx_t *dev, uint8_t state)
      */
     if (state != AT86RF2XX_STATE_RX_AACK_ON) {
         while (at86rf2xx_get_status(dev) != state);
-    }
+    } else {        
+		while (at86rf2xx_get_status(dev) == AT86RF2XX_STATE_IN_PROGRESS);
+	}
 
     dev->state = state;
 }
@@ -450,7 +476,7 @@ void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
         return;
     }
 
-    /* we need to go via PLL_ON if we are moving between RX_AACK_ON <-> TX_ARET_ON */
+	/* we need to go via PLL_ON if we are moving between RX_AACK_ON <-> TX_ARET_ON */
     if ((old_state == AT86RF2XX_STATE_RX_AACK_ON &&
              state == AT86RF2XX_STATE_TX_ARET_ON) ||
         (old_state == AT86RF2XX_STATE_TX_ARET_ON &&
@@ -458,7 +484,7 @@ void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
         _set_state(dev, AT86RF2XX_STATE_PLL_ON);
     }
     /* check if we need to wake up from sleep mode */
-    else if (old_state == AT86RF2XX_STATE_SLEEP) {
+	else if (old_state == AT86RF2XX_STATE_SLEEP) {
         DEBUG("at86rf2xx: waking up from sleep mode\n");
         at86rf2xx_assert_awake(dev);
     }
@@ -466,7 +492,7 @@ void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
     if (state == AT86RF2XX_STATE_SLEEP) {
         /* First go to TRX_OFF */
         at86rf2xx_force_trx_off(dev);
-        /* Discard all IRQ flags, framebuffer is lost anyway */
+	    /* Discard all IRQ flags, framebuffer is lost anyway */
         at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_STATUS);
         /* Go to SLEEP mode from TRX_OFF */
         gpio_set(dev->params.sleep_pin);
@@ -474,6 +500,8 @@ void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
     } else {
         _set_state(dev, state);
     }
+	DEBUG("(%2x,%2x,%2x)\n", at86rf2xx_get_status(dev), at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+           & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS, state);
 }
 
 void at86rf2xx_reset_state_machine(at86rf2xx_t *dev)

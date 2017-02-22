@@ -27,6 +27,10 @@
 #include "lpm.h"
 #include "irq.h"
 #include "log.h"
+#include "net/gnrc/netapi.h"
+#include "net/gnrc/netreg.h"
+#include "net/gnrc/netdev2.h"
+#include <periph/gpio.h>
 
 #ifdef MODULE_SCHEDSTATISTICS
 #include "sched.h"
@@ -40,6 +44,7 @@
 #endif
 
 volatile int lpm_prevent_sleep = 0;
+volatile int main_start = 0;
 
 extern int main(void);
 static void *main_trampoline(void *arg)
@@ -56,7 +61,7 @@ static void *main_trampoline(void *arg)
 #endif
 
     LOG_INFO("main(): This is RIOT! (Version: " RIOT_VERSION ")\n");
-
+	main_start = 1;
     main();
     return NULL;
 }
@@ -66,11 +71,25 @@ static void *idle_thread(void *arg)
     (void) arg;
 
     while (1) {
+		/* Make sure if all radios turn off before turning off cpu */
+		if (main_start) {
+			kernel_pid_t radio[GNRC_NETIF_NUMOF];
+	   		uint8_t radio_num = gnrc_netif_get(radio);
+			netopt_state_t radio_state;
+			lpm_prevent_sleep = 0;
+			for (int i=0; i <radio_num; i++) {
+				gnrc_netapi_get(radio[i], NETOPT_STATE, 0, &radio_state, sizeof(netopt_state_t));
+				if (radio_state != NETOPT_STATE_SLEEP) {
+					lpm_prevent_sleep = 1;
+					break;
+				}
+			}
+		}
         if (lpm_prevent_sleep) {
             lpm_set(LPM_IDLE);
         }
         else {
-            /* lpm_set(LPM_IDLE); */
+			/* lpm_set(LPM_IDLE); */
             /* lpm_set(LPM_SLEEP); */
             /* lpm_set(LPM_POWERDOWN); */
             lpm_set(LPM_OFF);
