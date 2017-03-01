@@ -215,10 +215,14 @@ void at86rf2xx_tx_exec(at86rf2xx_t *dev)
 #if AUTO_CSMA_EN
 #else
     while(!at86rf2xx_cca(dev)) {
-      at86rf2xx_set_state(dev, AT86RF2XX_STATE_RX_AACK_ON); /* Listening during backoff */
+#if LEAF_NODE
+      at86rf2xx_set_state(dev, AT86RF2XX_STATE_FORCE_TRX_OFF); /* Listening during backoff */
+#else
+      at86rf2xx_set_state(dev, AT86RF2XX_STATE_RX_AACK_ON); /* Listening during backoff */	
+#endif
       xtimer_usleep((rand()%(2^BE))*320);
       at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
-      printf("CCA busy %u\n", (2^BE)*320);
+      DEBUG("CCA busy %u\n", (2^BE)*320);
       if (BE < MAX_BE) {
         BE++;
       }    

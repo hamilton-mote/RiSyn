@@ -21,7 +21,6 @@
 
 #include "net/gnrc/netdev2/ieee802154.h"
 #include "byteorder.h"
-#include "board.h"
 
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
@@ -124,8 +123,7 @@ static gnrc_pktsnip_t *_recv(gnrc_netdev2_t *gnrc_netdev2)
 				netopt_state_t sleepstate = NETOPT_STATE_SLEEP;
 				netdev->driver->set(netdev, NETOPT_STATE, &sleepstate, sizeof(netopt_state_t));
 			}
-#endif
-#if ROUTER
+#else
 			/* Data request command or Data */
 			if ((((uint8_t*)ieee802154_hdr->data)[0] & IEEE802154_FCF_TYPE_MASK) == 
 				IEEE802154_FCF_TYPE_MACCMD) {
@@ -214,12 +212,11 @@ static int _send(gnrc_netdev2_t *gnrc_netdev2, gnrc_pktsnip_t *pkt)
 	/* ToDo: Current version does not use a neighbor discovery protocol, which cannot support unicast.
           We can manually set a destination (router's address) here */
 #if LEAF_NODE
- 	int16_t ddd = 0x166d;
- 	dst = (uint8_t*)&ddd;
-#endif
-#if ROUTER
- 	int16_t ddd = 0x1e17;
- 	dst = (uint8_t*)&ddd;
+ 	//int16_t ddd = 0x166d;
+ 	//dst = (uint8_t*)&ddd;
+#else
+ 	//int16_t ddd = 0x1e17;
+ 	//dst = (uint8_t*)&ddd;
 #endif
 #endif
     /* fill MAC header, seq should be set by device */

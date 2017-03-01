@@ -38,7 +38,6 @@
 
 #include "xtimer.h"
 
-#if DUTYCYCLE_EN
 #if LEAF_NODE
 
 #define ENABLE_DEBUG    (0)
@@ -50,6 +49,7 @@
 
 #define NETDEV2_NETAPI_MSG_QUEUE_SIZE 8
 #define NETDEV2_PKT_QUEUE_SIZE 4
+#define DUTYCYCLE_WAKEUP_INTERVAL  6000UL    /* Don't change it w/o particular reasons */
 
 static void _pass_on_packet(gnrc_pktsnip_t *pkt);
 
@@ -533,5 +533,4 @@ kernel_pid_t gnrc_netdev2_dutymac_init(char *stack, int stacksize, char priority
 
     return res;
 }
-#endif
 #endif

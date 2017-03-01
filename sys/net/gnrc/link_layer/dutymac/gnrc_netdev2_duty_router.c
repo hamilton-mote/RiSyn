@@ -36,8 +36,8 @@
 
 #include "xtimer.h"
 
-#if DUTYCYCLE_EN
-#if ROUTER
+#if LEAF_NODE
+#else
 
 #define ENABLE_DEBUG    (0)
 #include "debug.h"
@@ -512,5 +512,4 @@ kernel_pid_t gnrc_netdev2_dutymac_init(char *stack, int stacksize, char priority
 
     return res;
 }
-#endif
 #endif
