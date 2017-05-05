@@ -931,7 +931,6 @@ int main(int argc, char *argv[])
                                     /* Retransmit the last frame that was sent. */
                                     rethos_rexmit_data_frame(&serial);
                                 }
-                                continue;
                             } else if (serial.frametype == RETHOS_FRAME_TYPE_ACK) {
                                 if (serial.in_seqno == serial.rexmit_seqno) {
                                     /* Mark the frame to be retransmitted as having been ACKed so we don't retransmit it on timeout. */
@@ -942,8 +941,10 @@ int main(int argc, char *argv[])
                                         check_fatal_error("Could not cancel rexmit timer");
                                     }
                                 }
-                                continue;
+                            } else {
+                                printf("Got frame of type %d on control channel\n", serial.frametype);
                             }
+                            goto serial_done;
                         }
 
                         /* ACK the frame we just received. */
@@ -952,7 +953,7 @@ int main(int argc, char *argv[])
                         /* If it's a duplicate, just drop the frame. */
                         if (serial.received_data_frame && (serial.in_seqno == serial.last_rcvd_seqno)) {
                             printf("Got a duplicate frame on channel %d\n", serial.channel);
-                            continue;
+                            goto serial_done;
                         }
 
                         serial.received_data_frame = true;
@@ -994,6 +995,7 @@ int main(int argc, char *argv[])
                 exit(1);
             }
         }
+    serial_done:
 
         if (FD_ISSET(tap_fd, &readfds)) {
             ssize_t res = read(tap_fd, inbuf, sizeof(inbuf));
