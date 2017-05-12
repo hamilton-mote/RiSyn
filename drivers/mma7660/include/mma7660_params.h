@@ -39,9 +39,20 @@ extern "C" {
 #ifndef MMA7660_PARAM_ADDR
 #define MMA7660_PARAM_ADDR        (MMA7660_ADDR)
 #endif
+#ifndef MMA7660_PARAM_AMSR
+#define MMA7660_PARAM_AMSR        (MMA7660_SR_AM1)
+#endif
+#ifndef MMA7660_PARAM_AWSR
+#define MMA7660_PARAM_AWSR        (MMA7660_SR_AW1)
+#endif
+#ifndef MMA7660_PARAM_FILT
+#define MMA7660_PARAM_FILT        (1)
+#endif
 
 #define MMA7660_PARAMS_DEFAULT    {.i2c = MMA7660_PARAM_I2C, \
-                                   .addr = MMA7660_PARAM_ADDR}
+                                   .addr = MMA7660_PARAM_ADDR,
+                                   .amsr = MMA7660_PARAM_AMSR,
+                                   .filt = MMA7660_PARAM_FILT}
 /**@}*/
 
 /**
