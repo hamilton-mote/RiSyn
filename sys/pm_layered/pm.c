@@ -80,7 +80,7 @@ void pm_block(unsigned mode)
 
 void pm_unblock(unsigned mode)
 {
-    assert(pm_blocker.val_u8[mode] > 0);
+    //assert(pm_blocker.val_u8[mode] > 0);
 
     unsigned state = irq_disable();
     pm_blocker.val_u8[mode]--;

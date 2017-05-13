@@ -2,6 +2,7 @@ PSEUDOMODULES += auto_init_gnrc_rpl
 PSEUDOMODULES += conn
 PSEUDOMODULES += conn_ip
 PSEUDOMODULES += conn_tcp
+PSEUDOMODULES += conn_tcp_freebsd
 PSEUDOMODULES += conn_udp
 PSEUDOMODULES += core_%
 PSEUDOMODULES += emb6_router
@@ -56,6 +57,7 @@ PSEUDOMODULES += sock
 PSEUDOMODULES += sock_ip
 PSEUDOMODULES += sock_tcp
 PSEUDOMODULES += sock_udp
+PSEUDOMODULES += sock_tcp_freebsd
 
 # include variants of the AT86RF2xx drivers as pseudo modules
 PSEUDOMODULES += at86rf23%

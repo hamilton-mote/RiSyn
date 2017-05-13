@@ -25,6 +25,10 @@
 #include "net/gnrc/udp.h"
 #include "net/gnrc/tcp.h"
 
+#ifdef MODULE_GNRC_TCP_FREEBSD
+#include "net/gnrc/tcp_freebsd.h"
+#endif
+
 #define _INVALID_TYPE(type) (((type) < GNRC_NETTYPE_UNDEF) || ((type) >= GNRC_NETTYPE_NUMOF))
 
 /* The registry as lookup table by gnrc_nettype_t */
@@ -131,7 +135,7 @@ int gnrc_netreg_calc_csum(gnrc_pktsnip_t *hdr, gnrc_pktsnip_t *pseudo_hdr)
         case GNRC_NETTYPE_ICMPV6:
             return gnrc_icmpv6_calc_csum(hdr, pseudo_hdr);
 #endif
-#ifdef MODULE_GNRC_TCP
+#if defined(MODULE_GNRC_TCP) || defined(MODULE_GNRC_TCP_FREEBSD)
         case GNRC_NETTYPE_TCP:
             return gnrc_tcp_calc_csum(hdr, pseudo_hdr);
 #endif

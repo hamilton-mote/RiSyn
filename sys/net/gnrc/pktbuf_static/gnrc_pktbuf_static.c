@@ -426,6 +426,8 @@ static gnrc_pktsnip_t *_create_snip(gnrc_pktsnip_t *next, void *data, size_t siz
     return pkt;
 }
 
+static int null_allocs = 0;
+
 static void *_pktbuf_alloc(size_t size)
 {
     _unused_t *prev = NULL, *ptr = _first_unused;
@@ -437,6 +439,7 @@ static void *_pktbuf_alloc(size_t size)
     }
     if (ptr == NULL) {
         DEBUG("pktbuf: no space left in packet buffer\n");
+        null_allocs += 1;
         return NULL;
     }
     /* _unused_t struct would fit => add new space at ptr */

@@ -80,6 +80,9 @@ typedef enum {
 #ifdef MODULE_GNRC_TCP
     GNRC_NETTYPE_TCP,           /**< Protocol is TCP */
 #endif
+#ifdef MODULE_GNRC_TCP_FREEBSD
+    GNRC_NETTYPE_TCP,           /**< Protocol is TCP */
+#endif
 #ifdef MODULE_GNRC_UDP
     GNRC_NETTYPE_UDP,           /**< Protocol is UDP */
 #endif
@@ -183,7 +186,7 @@ static inline gnrc_nettype_t gnrc_nettype_from_protnum(uint8_t num)
         case PROTNUM_IPV6:
             return GNRC_NETTYPE_IPV6;
 #endif
-#ifdef MODULE_GNRC_TCP
+#if defined(MODULE_GNRC_TCP) || defined(MODULE_GNRC_TCP_FREEBSD)
         case PROTNUM_TCP:
             return GNRC_NETTYPE_TCP;
 #endif

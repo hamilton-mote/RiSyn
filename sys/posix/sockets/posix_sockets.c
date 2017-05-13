@@ -35,6 +35,7 @@
 #include "net/sock/ip.h"
 #include "net/sock/udp.h"
 #include "net/sock/tcp.h"
+#include "net/sock/tcp_freebsd.h"
 
 /* enough to create sockets both with socket() and accept() */
 #define _ACTUAL_SOCKET_POOL_SIZE   (SOCKET_POOL_SIZE + \
@@ -61,6 +62,9 @@ typedef union {
 #ifdef MODULE_SOCK_UDP
     sock_udp_t udp;             /**< UDP sock */
 #endif /* MODULE_SOCK_UDP */
+#ifdef MODULE_SOCK_TCP_FREEBSD
+    sock_tcp_freebsd_t tcp_freebsd;
+#endif
 } socket_sock_t;
 
 typedef struct {
@@ -139,7 +143,7 @@ static int _get_sock_idx(socket_sock_t *sock)
 static inline int _choose_ipproto(int type, int protocol)
 {
     switch (type) {
-#ifdef MODULE_SOCK_TCP
+#if defined(MODULE_SOCK_TCP) || defined(MODULE_SOCK_TCP_FREEBSD)
         case SOCK_STREAM:
             if ((protocol == 0) || (protocol == IPPROTO_TCP)) {
                 return protocol;
@@ -273,6 +277,11 @@ static int socket_close(vfs_file_t *filp)
                 }
                 break;
 #endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+            case SOCK_STREAM:
+                sock_tcp_freebsd_close(&s->sock->tcp_freebsd);
+                break;
+#endif
             default:
                 errno = EOPNOTSUPP;
                 res = -1;
@@ -386,8 +395,14 @@ int socket(int domain, int type, int protocol)
 int accept(int socket, struct sockaddr *restrict address,
            socklen_t *restrict address_len)
 {
+#ifdef MODULE_SOCK_TCP_FREEBSD
+    sock_tcp_freebsd_t* sock = NULL;
+#endif
 #ifdef MODULE_SOCK_TCP
     sock_tcp_t *sock = NULL;
+#endif
+
+#if defined(MODULE_SOCK_TCP) || defined(MODULE_SOCK_TCP_FREEBSD)
     socket_t *s, *new_s = NULL;
     int res = 0;
 
@@ -418,6 +433,29 @@ int accept(int socket, struct sockaddr *restrict address,
                 res = -1;
                 break;
             }
+            new_s->sock = _get_free_sock();
+            if (new_s->sock == NULL) {
+                new_s->domain = AF_UNSPEC;
+                errno = ENOMEM;
+                res = -1;
+                break;
+            }
+
+#ifdef MODULE_SOCK_TCP_FREEBSD
+            if (s->domain != AF_INET6) {
+                errno = EPROTO;
+                res = -1;
+                break;
+            }
+            sock = (sock_tcp_freebsd_t*) &new_s->sock->tcp_freebsd;
+            (void) recv_timeout;
+            if ((res = sock_tcp_freebsd_accept(&s->sock->tcp_freebsd, sock)) < 0) {
+
+                errno = -res;
+                res = -1;
+                break;
+            }
+#else
             sock = (sock_tcp_t *)new_s->sock;
             if ((res = sock_tcp_accept(&s->sock->tcp.queue, &sock,
                                        recv_timeout)) < 0) {
@@ -425,25 +463,34 @@ int accept(int socket, struct sockaddr *restrict address,
                 res = -1;
                 break;
             }
+#endif
             else {
                 if ((address != NULL) && (address_len != NULL)) {
                     sock_tcp_ep_t ep;
                     struct sockaddr_storage sa;
                     socklen_t sa_len;
 
+#ifdef MODULE_SOCK_TCP
                     if ((res = sock_tcp_get_remote(sock, &ep)) < 0) {
                         errno = -res;
                         res = -1;
                         break;
                     }
+#endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+                    if ((res = sock_tcp_freebsd_getpeeraddr(sock, &ep.addr.ipv6, &ep.port)) < 0) {
+                        errno = -res;
+                        res = -1;
+                        break;
+                    }
+#endif
                     sa.ss_family = s->domain;
                     sa_len = _ep_to_sockaddr(&ep, &sa);
                     *address_len = _addr_truncate(address, *address_len, &sa,
                                                   sa_len);
 
                 }
-                int fd = fd_new(new_s - _socket_pool, socket_read, socket_write,
-                                socket_close);
+                int fd = vfs_bind(VFS_ANY_FD, 0, &socket_ops, new_s);
                 if (fd < 0) {
                     errno = ENFILE;
                     res = -1;
@@ -456,8 +503,10 @@ int accept(int socket, struct sockaddr *restrict address,
                 new_s->type = s->type;
                 new_s->protocol = s->protocol;
                 new_s->bound = true;
+#ifdef MODULE_SOCK_TCP
                 new_s->queue_array = NULL;
                 new_s->queue_array_len = 0;
+#endif
                 memset(&s->local, 0, sizeof(sock_tcp_ep_t));
             }
             break;
@@ -467,7 +516,12 @@ int accept(int socket, struct sockaddr *restrict address,
             break;
     }
     if ((res < 0) && (sock != NULL)) {
+#ifdef MODULE_SOCK_TCP
         sock_tcp_disconnect(sock);
+#endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+        sock_tcp_freebsd_close(sock);
+#endif
     }
     mutex_unlock(&_socket_pool_mutex);
     return res;
@@ -507,6 +561,10 @@ int bind(int socket, const struct sockaddr *address, socklen_t address_len)
             break;
 #endif
 #ifdef MODULE_SOCK_TCP
+        case SOCK_STREAM:
+            break;
+#endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
         case SOCK_STREAM:
             break;
 #endif
@@ -568,6 +626,19 @@ static int _bind_connect(socket_t *s, const struct sockaddr *address,
             assert(remote != NULL);
             res = sock_tcp_connect(&sock->tcp.sock, remote,
                                    (local == NULL) ? 0 : local->port, 0);
+            break;
+#endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+        case SOCK_STREAM:
+            if (remote == NULL) {
+                res = -EFAULT;
+                break;
+            }
+            if ((res = sock_tcp_freebsd_create(&sock->tcp_freebsd, &s->local.addr.ipv6, sizeof(s->local.addr.ipv6), s->domain, s->local.port)) < 0) {
+                errno = -res;
+                return -1;
+            }
+            res = sock_tcp_freebsd_connect(&sock->tcp_freebsd, &remote->addr.ipv6, sizeof(remote->addr.ipv6), remote->port);
             break;
 #endif
 #ifdef MODULE_SOCK_UDP
@@ -645,6 +716,11 @@ static int _getpeername(socket_t *s, struct sockaddr *__restrict address,
             }
             break;
 #endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+        case SOCK_STREAM:
+            res = sock_tcp_freebsd_getpeeraddr(&s->sock->tcp_freebsd, &ep.addr.ipv6, &ep.port);
+            break;
+#endif
 #ifdef MODULE_SOCK_UDP
         case SOCK_DGRAM:
             res = sock_udp_get_remote(&s->sock->udp, &ep);
@@ -719,6 +795,11 @@ int getsockname(int socket, struct sockaddr *__restrict address,
                 }
                 break;
 #endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+            case SOCK_STREAM:
+                res = sock_tcp_freebsd_getlocaladdr(&s->sock->tcp_freebsd, &ep.addr.ipv6, &ep.port);
+                break;
+#endif
 #ifdef MODULE_SOCK_UDP
             case SOCK_DGRAM:
                 res = sock_udp_get_local(&s->sock->udp, &ep);
@@ -743,7 +824,7 @@ int getsockname(int socket, struct sockaddr *__restrict address,
 
 int listen(int socket, int backlog)
 {
-#ifdef MODULE_SOCK_TCP
+#if defined(MODULE_SOCK_TCP) || defined(MODULE_SOCK_TCP_FREEBSD)
     socket_t *s;
     socket_sock_t *sock;
     int res = 0;
@@ -756,11 +837,13 @@ int listen(int socket, int backlog)
         return -1;
     }
     if (s->sock != NULL) {
+#ifdef MODULE_SOCK_TCP
         /* or this socket is already connected, this is an error */
         if (s->queue_array == NULL) {
             errno = EINVAL;
             res = -1;
         }
+#endif
         mutex_unlock(&_socket_pool_mutex);
         return res;
     }
@@ -770,15 +853,26 @@ int listen(int socket, int backlog)
         errno = ENOMEM;
         return -1;
     }
+#ifdef MODULE_SOCK_TCP
     s->queue_array = _tcp_sock_pool[_get_sock_idx(sock)];
     s->queue_array_len = (backlog < SOCKET_TCP_QUEUE_SIZE) ? backlog :
                          SOCKET_TCP_QUEUE_SIZE;
+#endif
     switch (s->type) {
         case SOCK_STREAM:
             if (s->bound) {
+#ifdef MODULE_SOCK_TCP
                 /* TODO apply flags if possible */
                 res = sock_tcp_listen(&sock->tcp.queue, &s->local,
                                       s->queue_array, s->queue_array_len, 0);
+#endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+                if ((res = sock_tcp_freebsd_create(&sock->tcp_freebsd, &s->local.addr.ipv6, sizeof(s->local.addr.ipv6), s->domain, s->local.port)) < 0) {
+                    errno = -res;
+                    return -1;
+                }
+                res = sock_tcp_freebsd_listen(&sock->tcp_freebsd, backlog);
+#endif
             }
             else {
                 res = -EDESTADDRREQ;
@@ -820,7 +914,7 @@ static ssize_t socket_recvfrom(socket_t *s, void *restrict buffer,
         return -ENOTSOCK;
     }
     if (s->sock == NULL) {  /* socket is not connected */
-#ifdef MODULE_SOCK_TCP
+#if defined(MODULE_SOCK_TCP) || defined(MODULE_SOCK_TCP_FREEBSD)
         if (s->type == SOCK_STREAM) {
             return -ENOTCONN;
         }
@@ -850,6 +944,11 @@ static ssize_t socket_recvfrom(socket_t *s, void *restrict buffer,
                                 recv_timeout);
             break;
 #endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+        case SOCK_STREAM:
+            res = sock_tcp_freebsd_recv(&s->sock->tcp_freebsd, buffer, length);
+            break;
+#endif
 #ifdef MODULE_SOCK_UDP
         case SOCK_DGRAM:
             res = sock_udp_recv(&s->sock->udp, buffer, length, recv_timeout,
@@ -865,7 +964,7 @@ static ssize_t socket_recvfrom(socket_t *s, void *restrict buffer,
     }
     if ((res >= 0) && (address != NULL) && (address_len != NULL)) {
         switch (s->type) {
-#ifdef MODULE_SOCK_TCP
+#if defined(MODULE_SOCK_TCP) || defined(MODULE_SOCK_TCP_FREEBSD)
             case SOCK_STREAM:
                 res = _getpeername(s, address, address_len);
                 break;
@@ -917,7 +1016,7 @@ static ssize_t socket_sendto(socket_t *s, const void *buffer, size_t length,
         return -1;
     }
     if (s->sock == NULL) {  /* socket is not connected */
-#ifdef MODULE_SOCK_TCP
+#if defined(MODULE_SOCK_TCP) || defined(MODULE_SOCK_TCP_FREEBSD)
         if (s->type == SOCK_STREAM) {
             errno = ENOTCONN;
             return -1;
@@ -942,11 +1041,24 @@ static ssize_t socket_sendto(socket_t *s, const void *buffer, size_t length,
             }
             break;
 #endif
-#ifdef MODULE_SOCK_TCP
+#if defined(MODULE_SOCK_TCP) || defined(MODULE_SOCK_TCP_FREEBSD)
         case SOCK_STREAM:
             if (address == NULL) {
                 (void)address_len;
-                if ((res = sock_tcp_write(&s->sock->tcp.sock, buffer, length)) < 0) {
+#ifdef MODULE_SOCK_TCP
+                res = sock_tcp_write(&s->sock->tcp.sock, buffer, length);
+#endif
+#ifdef MODULE_SOCK_TCP_FREEBSD
+                res = sock_tcp_freebsd_send(&s->sock->tcp_freebsd, buffer, length);
+                if (res < 0) {
+                    errno = -res;
+                    res = -1;
+                } else {
+                    errno = 0;
+                    res = length;
+                }
+#endif
+                if (res < 0) {
                     errno = -res;
                     res = -1;
                 }

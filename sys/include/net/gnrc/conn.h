@@ -24,9 +24,14 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "cib.h"
+#include "condition.h"
+#include "mutex.h"
 #include "net/ipv6/addr.h"
 #include "net/gnrc.h"
 #include "sched.h"
+
+#include "net/tcp_freebsd.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -25,6 +25,7 @@
 #include "net/gnrc/sixlowpan/ctx.h"
 #include "net/gnrc/sixlowpan/nd.h"
 #include "net/gnrc/sixlowpan/nd/router.h"
+#include "net/gnrc/ipv6/autoconf_onehop.h"
 #include "net/protnum.h"
 #include "thread.h"
 #include "utlist.h"
@@ -632,6 +633,12 @@ static inline kernel_pid_t _next_hop_l2addr(uint8_t *l2addr, uint8_t *l2addr_len
 #if defined(MODULE_GNRC_SIXLOWPAN_ND)
     (void)pkt;
     found_iface = gnrc_sixlowpan_nd_next_hop_l2addr(l2addr, l2addr_len, iface, dst);
+    if (found_iface > KERNEL_PID_UNDEF) {
+        return found_iface;
+    }
+#endif
+#if defined(MODULE_GNRC_IPV6_AUTOCONF_ONEHOP)
+    found_iface = gnrc_ipv6_autoconf_next_hop_l2addr(l2addr, l2addr_len, iface, dst);
     if (found_iface > KERNEL_PID_UNDEF) {
         return found_iface;
     }

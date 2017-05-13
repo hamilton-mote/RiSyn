@@ -17,7 +17,7 @@
  * @author  Kaspar Schleiser <kaspar@schleiser.de>
  */
 
-#ifdef MODULE_ETHOS
+#if defined(MODULE_ETHOS) || defined(MODULE_RETHOS)
 
 #include "log.h"
 #include "debug.h"

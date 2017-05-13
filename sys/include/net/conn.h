@@ -77,7 +77,11 @@
 #define NET_CONN_H
 
 #include "net/conn/ip.h"
+
+#ifdef MODULE_GNRC_CONN_TCP
 #include "net/conn/tcp.h"
+#endif
+
 #include "net/conn/udp.h"
 #include "net/ipv6/addr.h"
 

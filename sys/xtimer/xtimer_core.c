@@ -170,20 +170,22 @@ static inline void _lltimer_set(uint32_t target)
 
 int _xtimer_set_absolute(xtimer_t *timer, uint32_t target)
 {
-    uint32_t now = _xtimer_now();
+    uint32_t now;
     int res = 0;
 
     DEBUG("timer_set_absolute(): now=%" PRIu32 " target=%" PRIu32 "\n", now, target);
 
+    unsigned state = irq_disable();
     timer->next = NULL;
+    now = _xtimer_now();
     if ((target >= now) && ((target - XTIMER_BACKOFF) < now)) {
+        irq_restore(state);
         /* backoff */
         xtimer_spin_until(target + XTIMER_BACKOFF);
         _shoot(timer);
         return 0;
     }
 
-    unsigned state = irq_disable();
     if (_is_set(timer)) {
         _remove(timer);
     }

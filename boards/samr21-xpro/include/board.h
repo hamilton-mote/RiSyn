@@ -30,6 +30,17 @@
 extern "C" {
 #endif
 
+extern const uint64_t* const fb_sentinel;
+extern const uint64_t* const fb_flashed_time;
+extern const uint8_t*  const fb_eui64;
+extern const uint16_t* const fb_device_id;
+extern const uint64_t* const fb_designator;
+extern const uint8_t*  const fb_aes128_key;
+extern const uint8_t*  const fb_25519_pub;
+extern const uint8_t*  const fb_25519_priv;
+#define FB_SENTINEL_VALUE 0x27c83f60f6b6e7c8
+#define HAS_FACTORY_BLOCK (*fb_sentinel == FB_SENTINEL_VALUE)
+
 /**
  * @name    xtimer configuration
  * @{

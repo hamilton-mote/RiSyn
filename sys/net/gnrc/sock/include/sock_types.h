@@ -32,6 +32,10 @@
 #include "net/sock/ip.h"
 #include "net/sock/udp.h"
 
+/* These two are needed for FreeBSD TCP. */
+#include "condition.h"
+#include "net/tcp_freebsd.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -73,6 +77,65 @@ struct sock_udp {
     sock_udp_ep_t local;                /**< local end-point */
     sock_udp_ep_t remote;               /**< remote end-point */
     uint16_t flags;                     /**< option flags */
+};
+
+/*
+ * @brief    Used in TCP FREEBSD sock type
+ * @internal
+ */
+struct sock_tcp_freebsd_send_state {
+    size_t buflen;
+    struct sock_tcp_freebsd_send_state* next;
+    struct lbufent entry;
+};
+
+/*
+ * @brief    Used in TCP FREEBSD sock type
+ * @internal
+ */
+struct sock_tcp_freebsd_accept_queue_entry {
+    int asockid;
+    void* recvbuf;
+};
+
+/*
+ * @brief    TCP FREEBSD sock type
+ * @internal
+ */
+struct sock_tcp_freebsd {
+    gnrc_nettype_t l3_type;
+    gnrc_nettype_t l4_type;
+    gnrc_netreg_entry_t netreg_entry; // to follow the inheritance
+
+    ipv6_addr_t local_addr;
+    uint16_t local_port;
+
+    mutex_t lock;
+    union {
+        struct {
+            int asock;
+            void* recvbuf;
+            mutex_t connect_lock;
+            condition_t connect_cond;
+            condition_t receive_cond;
+            condition_t send_cond;
+
+            struct sock_tcp_freebsd_send_state* send_head;
+            struct sock_tcp_freebsd_send_state* send_tail;
+            size_t in_send_buffer;
+        } active;
+        struct {
+            int psock;
+            condition_t accept_cond;
+
+            /* Circular buffer for accept queue. */
+            cib_t accept_cib;
+            struct sock_tcp_freebsd_accept_queue_entry* accept_queue;
+        } passive;
+    } sfields; /* specific fields */
+    int errstat;
+    bool hasactive;
+    bool haspassive;
 };
 
 #ifdef __cplusplus
