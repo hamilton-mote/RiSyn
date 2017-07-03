@@ -118,6 +118,14 @@ extern "C"
 typedef struct {
     i2c_t i2c;              /**< I2C device, the sensor is connected to */
     uint8_t addr;           /**< the sensor's slave address on the I2C bus */
+    uint8_t  conv_rate;     /**< sensor's conversion rate */
+} tmp006_params_t;
+
+/**
+ * @brief Device descriptor for TMP006 sensors.
+ */
+typedef struct {
+    tmp006_params_t p;
     bool initialized;       /**< sensor status, true if sensor is initialized */
 } tmp006_t;
 
@@ -146,7 +154,7 @@ int tmp006_test(tmp006_t *dev);
  * @return                  -3 if sensor test failed
  * @return                  -4 if sensor configuration failed
  */
-int tmp006_init(tmp006_t *dev, i2c_t i2c, uint8_t address, uint8_t conv_rate);
+int tmp006_init(tmp006_t *dev, const tmp006_params_t *params); //i2c_t i2c, uint8_t address, uint8_t conv_rate);
 
 /**
  * @brief Reset the TMP006 sensor. After that, the sensor should be reinitialized.
@@ -179,7 +187,7 @@ int tmp006_set_active(tmp006_t *dev);
 int tmp006_set_standby(tmp006_t *dev);
 
 /**
- * @brief Read sensor's data.
+ * @brief Get prepared sensor's data.
  *
  * @param[in]  dev          device descriptor of sensor
  * @param[out] rawv         object voltage value
@@ -189,7 +197,18 @@ int tmp006_set_standby(tmp006_t *dev);
  * @return                  0 on success
  * @return                  -1 on error
  */
-int tmp006_read(tmp006_t *dev, int16_t *rawv, int16_t *rawt, uint8_t *drdy);
+int tmp006_get_results(tmp006_t *dev, int16_t *rawv, int16_t *rawt, uint8_t *drdy);
+
+/**
+ * @brief Read sensor's data.
+ *
+ * @param[in]  dev          device descriptor of sensor
+ * @param[out] rawt         raw die temperature
+ *
+ * @return                  0 on success
+ * @return                  -1 on error
+ */
+int tmp006_read(tmp006_t *dev, int16_t *rawt);
 
 /**
  * @brief Convert raw sensor values to temperature.

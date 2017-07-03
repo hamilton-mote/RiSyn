@@ -118,6 +118,7 @@ extern "C" {
 #define AT86RF2XX_OPT_SRC_ADDR_LONG  (NETDEV_IEEE802154_SRC_MODE_LONG)  /**< legacy define */
 #define AT86RF2XX_OPT_RAWDUMP        (NETDEV_IEEE802154_RAW)            /**< legacy define */
 #define AT86RF2XX_OPT_AUTOACK        (NETDEV_IEEE802154_ACK_REQ)        /**< legacy define */
+#define AT86RF2XX_OPT_ACK_PENDING    (NETDEV_IEEE802154_FRAME_PEND)       /**< legacy define */
 
 #define AT86RF2XX_OPT_CSMA           (0x0100)       /**< CSMA active */
 #define AT86RF2XX_OPT_PROMISCUOUS    (0x0200)       /**< promiscuous mode
@@ -386,8 +387,10 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state);
  *
  * @param[in] dev           device to change state of
  * @param[in] state         the targeted new state
+ *
+ * @return                  the previous state before the new state was set
  */
-void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state);
+uint8_t at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state);
 
 /**
  * @brief   Reset the internal state machine to TRX_OFF mode.

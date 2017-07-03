@@ -73,12 +73,15 @@ typedef enum {
     NETDEV_EVENT_ISR,               /**< driver needs it's ISR handled */
     NETDEV_EVENT_RX_STARTED,        /**< started to receive a packet */
     NETDEV_EVENT_RX_COMPLETE,       /**< finished receiving a packet */
+	NETDEV_EVENT_RX_DATAREQ,        /**< finished receiving a data req */
+	NETDEV_EVENT_RX_PENDING,		/**< finished receiving a data with pending bit */
     NETDEV_EVENT_TX_STARTED,        /**< started to transfer a packet */
     NETDEV_EVENT_TX_COMPLETE,       /**< finished transferring packet */
+    NETDEV_EVENT_TX_COMPLETE_PENDING,         /**< link gone */
     NETDEV_EVENT_TX_NOACK,          /**< ACK requested but not received */
     NETDEV_EVENT_TX_MEDIUM_BUSY,    /**< couldn't transfer packet */
     NETDEV_EVENT_LINK_UP,           /**< link established */
-    NETDEV_EVENT_LINK_DOWN,         /**< link gone */
+    NETDEV_EVENT_LINK_DOWN,         /**< link gone */	
     /* expand this list if needed */
 } netdev_event_t;
 

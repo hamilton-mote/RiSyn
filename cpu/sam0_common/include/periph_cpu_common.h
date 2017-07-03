@@ -65,7 +65,7 @@ typedef uint32_t gpio_t;
  */
 #define PM_NUM_MODES        (3)
 /** @todo   we block all modes per default, until PM is cleanly implemented */
-#define PM_BLOCKER_INITIAL  { .val_u32 = 0x01010101 }
+#define PM_BLOCKER_INITIAL  { .val_u32 = 0x00000000 }
 /** @} */
 
 #ifndef DOXYGEN
@@ -155,11 +155,11 @@ typedef enum {
  */
 #define HAVE_SPI_CLK_T
 typedef enum {
-    SPI_CLK_100KHZ =   100000U, /**< drive the SPI bus with 100KHz */
-    SPI_CLK_400KHZ =   400000U, /**< drive the SPI bus with 400KHz */
-    SPI_CLK_1MHZ   =  1000000U, /**< drive the SPI bus with 1MHz */
-    SPI_CLK_5MHZ   =  5000000U, /**< drive the SPI bus with 5MHz */
-    SPI_CLK_10MHZ  = 10000000U  /**< drive the SPI bus with 10MHz */
+    SPI_CLK_100KHZ =   100000UL, /**< drive the SPI bus with 100KHz */
+    SPI_CLK_400KHZ =   400000UL, /**< drive the SPI bus with 400KHz */
+    SPI_CLK_1MHZ   =  1000000UL, /**< drive the SPI bus with 1MHz */
+    SPI_CLK_5MHZ   =  5000000UL, /**< drive the SPI bus with 5MHz */
+    SPI_CLK_10MHZ  = 10000000UL  /**< drive the SPI bus with 10MHz */
 } spi_clk_t;
 /** @} */
 

@@ -26,6 +26,7 @@
 #include "at86rf2xx.h"
 #include "at86rf2xx_internal.h"
 #include "at86rf2xx_registers.h"
+#include "pm_layered.h"
 #include "periph/spi.h"
 
 #define ENABLE_DEBUG (0)
@@ -344,8 +345,11 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
                       "(4 retries, min BE: 3 max BE: 5)\n");
                 /* Initialize CSMA seed with hardware address */
                 at86rf2xx_set_csma_seed(dev, dev->netdev.long_addr);
-                at86rf2xx_set_csma_max_retries(dev, 4);
-                at86rf2xx_set_csma_backoff_exp(dev, 3, 5);
+                //at86rf2xx_set_csma_max_retries(dev, 4);
+                //at86rf2xx_set_csma_backoff_exp(dev, 3, 5);
+                at86rf2xx_set_csma_max_retries(dev, 0);
+                at86rf2xx_set_csma_backoff_exp(dev, 0, 0);
+                at86rf2xx_set_max_retries(dev, 0);
                 break;
             case AT86RF2XX_OPT_PROMISCUOUS:
                 DEBUG("[at86rf2xx] opt: enabling PROMISCUOUS mode\n");
@@ -362,6 +366,12 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
                 DEBUG("[at86rf2xx] opt: enabling auto ACKs\n");
                 tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
                 tmp &= ~(AT86RF2XX_CSMA_SEED_1__AACK_DIS_ACK);
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
+                break;
+            case AT86RF2XX_OPT_ACK_PENDING:
+                DEBUG("[at86rf2xx] opt: enabling pending ACKs\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
+                tmp |= AT86RF2XX_CSMA_SEED_1__AACK_SET_PD;
                 at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
                 break;
             case AT86RF2XX_OPT_TELL_RX_START:
@@ -405,6 +415,12 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
                 tmp |= AT86RF2XX_CSMA_SEED_1__AACK_DIS_ACK;
                 at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
                 break;
+             case AT86RF2XX_OPT_ACK_PENDING:
+                DEBUG("[at86rf2xx] opt: disabling ACK pending\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
+                tmp &= ~(AT86RF2XX_CSMA_SEED_1__AACK_SET_PD);
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
+                break;
             case AT86RF2XX_OPT_TELL_RX_START:
                 DEBUG("[at86rf2xx] opt: disabling SFD IRQ\n");
                 tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_MASK);
@@ -430,6 +446,7 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
 
 static inline void _set_state(at86rf2xx_t *dev, uint8_t state, uint8_t cmd)
 {
+	/* Prevent CPU from going to the full sleep mode */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_STATE, cmd);
 
     /* To prevent a possible race condition when changing to
@@ -439,34 +456,32 @@ static inline void _set_state(at86rf2xx_t *dev, uint8_t state, uint8_t cmd)
      */
     if (state != AT86RF2XX_STATE_RX_AACK_ON) {
         while (at86rf2xx_get_status(dev) != state);
+    } else {
+        while (at86rf2xx_get_status(dev) == AT86RF2XX_STATE_IN_PROGRESS);
     }
 
     dev->state = state;
 }
 
-void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
+uint8_t at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
 {
-    uint8_t old_state = at86rf2xx_get_status(dev);
-
-    if (state == old_state) {
-        return;
-    }
-
-    if (state == AT86RF2XX_STATE_FORCE_TRX_OFF) {
-        _set_state(dev, AT86RF2XX_STATE_TRX_OFF, state);
-        return;
-    }
+	uint8_t old_state;
 
     /* make sure there is no ongoing transmission, or state transition already
      * in progress */
-    while (old_state == AT86RF2XX_STATE_BUSY_RX_AACK ||
-           old_state == AT86RF2XX_STATE_BUSY_TX_ARET ||
-           old_state == AT86RF2XX_STATE_IN_PROGRESS) {
-        old_state = at86rf2xx_get_status(dev);
-    }
+    do {
+          old_state = at86rf2xx_get_status(dev);		         
+    } while (old_state == AT86RF2XX_STATE_BUSY_RX_AACK ||
+             old_state == AT86RF2XX_STATE_BUSY_TX_ARET ||
+             old_state == AT86RF2XX_STATE_IN_PROGRESS);
+
+    if (state == AT86RF2XX_STATE_FORCE_TRX_OFF) {
+        _set_state(dev, AT86RF2XX_STATE_TRX_OFF, state);
+        return old_state;
+    }		      
 
     if (state == old_state) {
-        return;
+        return old_state;
     }
 
     /* we need to go via PLL_ON if we are moving between RX_AACK_ON <-> TX_ARET_ON */
@@ -476,9 +491,11 @@ void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
              state == AT86RF2XX_STATE_RX_AACK_ON)) {
         _set_state(dev, AT86RF2XX_STATE_PLL_ON, AT86RF2XX_STATE_PLL_ON);
     }
+
     /* check if we need to wake up from sleep mode */
     else if (old_state == AT86RF2XX_STATE_SLEEP) {
         DEBUG("at86rf2xx: waking up from sleep mode\n");
+		/* Prevent CPU from going to the full sleep mode */		
         at86rf2xx_assert_awake(dev);
     }
 
@@ -490,15 +507,25 @@ void at86rf2xx_set_state(at86rf2xx_t *dev, uint8_t state)
         /* Go to SLEEP mode from TRX_OFF */
         gpio_set(dev->params.sleep_pin);
         dev->state = state;
+		/* Allow MCU to go to the full sleep mode */
+		if (old_state != AT86RF2XX_STATE_SLEEP) {
+            pm_unblock(PM_NUM_MODES-1);
+        }
     } else {
         _set_state(dev, state, state);
     }
+
+    DEBUG("(%2x,%2x,%2x)\n", at86rf2xx_get_status(dev), at86rf2xx_reg_read(dev, AT86RF2XX_REG__TRX_STATUS)
+            & AT86RF2XX_TRX_STATUS_MASK__TRX_STATUS, state);
+
+	return old_state;
 }
 
 void at86rf2xx_reset_state_machine(at86rf2xx_t *dev)
 {
     uint8_t old_state;
 
+	/* Prevent CPU from going to the full sleep mode */
     at86rf2xx_assert_awake(dev);
 
     /* Wait for any state transitions to complete before forcing TRX_OFF */

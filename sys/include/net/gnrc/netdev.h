@@ -67,6 +67,19 @@ extern "C" {
 #define GNRC_NETDEV_MAC_INFO_RX_STARTED         (0x0004U)
 
 /**
+ * @brief   Type for @ref msg_t if device updates dutycycle operation
+ */
+#define GNRC_NETDEV_DUTYCYCLE_MSG_TYPE_EVENT (0x1235U)
+/**
+ * @brief   Type for @ref msg_t if device updates dutycycle operation
+ */
+#define GNRC_NETDEV_DUTYCYCLE_MSG_TYPE_SND (0x1236U)
+/**
+ * @brief   Type for @ref msg_t if device updates dutycycle operation
+ */
+#define GNRC_NETDEV_DUTYCYCLE_MSG_TYPE_REMOVE_QUEUE (0x1237U)
+
+/**
  * @brief Structure holding GNRC netdev adapter state
  *
  * This structure is supposed to hold any state parameters needed
@@ -82,6 +95,14 @@ typedef struct gnrc_netdev {
      * the underlying device understands and send it.
      */
     int (*send)(struct gnrc_netdev *dev, gnrc_pktsnip_t *snip);
+
+    /**
+     * @brief Send a data request using this device
+     *
+     * This function should make a data request (MAC command) 
+	   for the corresponding link layer type.
+     */
+    int (*send_dataReq)(struct gnrc_netdev *dev);
 
     /**
      * @brief Receive a pktsnip from this device
@@ -203,6 +224,40 @@ static inline void gnrc_netdev_set_tx_feedback(gnrc_netdev_t *dev,
 }
 #endif
 
+#if MODULE_GNRC_DUTYMAC
+
+#ifndef LEAF_NODE
+#define LEAF_NODE (1) /* 0: Always-on router, 1: Duty-cycling leaf node */
+#endif
+
+#ifndef DUTYCYCLE_SLEEP_INTERVAL
+#define DUTYCYCLE_SLEEP_INTERVAL 2000000UL /* 1) When it is ZERO, a leaf node does not send beacons
+                        						(i.e., extremely low duty-cycle,
+                                                        but downlink transmission is disabled)
+                                              2) Router and leaf node should have same sleep interval.
+             								   Router does not sleep                       												   but uses the value for downlink transmissions */
+#endif
+
+#ifndef DUTYCYCLE_WAKEUP_INTERVAL
+#define DUTYCYCLE_WAKEUP_INTERVAL  6000UL    /* Don't change it w/o particular reasons */
+#endif
+
+/**
+  * @brief Initialize GNRC netdev2 handler thread for dutycycling
+  *
+  * @param[in] stack         ptr to preallocated stack buffer
+  * @param[in] stacksize     size of stack buffer
+  * @param[in] priority      priority of thread
+  * @param[in] name          name of thread
+  * @param[in] gnrc_netdev2  ptr to netdev2 device to handle in created thread
+  *
+  * @return pid of created thread
+  * @return KERNEL_PID_UNDEF on error
+  */
+kernel_pid_t gnrc_netdev_dutymac_init(char *stack, int stacksize, char priority,
+                                const char *name, gnrc_netdev_t *gnrc_netdev);
+
+#else
 /**
  * @brief Initialize GNRC netdev handler thread
  *
@@ -217,6 +272,7 @@ static inline void gnrc_netdev_set_tx_feedback(gnrc_netdev_t *dev,
  */
 kernel_pid_t gnrc_netdev_init(char *stack, int stacksize, char priority,
                                const char *name, gnrc_netdev_t *gnrc_netdev);
+#endif
 
 #ifdef __cplusplus
 }

@@ -116,11 +116,11 @@ int hdc1000_init(hdc1000_t *dev, const hdc1000_params_t *params);
  *
  * After the conversion is triggered, one has to wait
  * @ref HDC1000_CONVERSION_TIME us until the results can be read using
- * @ref hdc1000_get_results().
+ * @ref hdc1000_reg_results().
  *
  * @param[in]  dev          device descriptor of sensor
  */
-void hdc1000_trigger_conversion(hdc1000_t *dev);
+int hdc1000_trigger_conversion(hdc1000_t *dev);
 
 /**
  * @brief   Read conversion results for temperature and humidity
@@ -129,7 +129,7 @@ void hdc1000_trigger_conversion(hdc1000_t *dev);
  * @param[out] temp         temperature [in 100 * degree centigrade]
  * @param[out] hum          humidity [in 100 * percent relative]
  */
-void hdc1000_get_results(hdc1000_t *dev, int16_t *temp, int16_t *hum);
+int hdc1000_get_results(hdc1000_t *dev, int16_t *temp, int16_t *hum);
 
 /**
  * @brief   Convenience function for reading temperature and humidity
@@ -141,7 +141,7 @@ void hdc1000_get_results(hdc1000_t *dev, int16_t *temp, int16_t *hum);
  * @param[out] temp         temperature [in 100 * degree centigrade]
  * @param[out] hum          humidity [in 100 * percent relative]
  */
-void hdc1000_read(hdc1000_t *dev, int16_t *temp, int16_t *hum);
+int hdc1000_read(hdc1000_t *dev, int16_t *temp, int16_t *hum);
 
 #ifdef __cplusplus
 }

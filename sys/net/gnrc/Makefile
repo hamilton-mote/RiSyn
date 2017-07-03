@@ -70,6 +70,9 @@ endif
 ifneq (,$(filter gnrc_mac,$(USEMODULE)))
     DIRS += link_layer/gnrc_mac
 endif
+ifneq (,$(filter gnrc_dutymac,$(USEMODULE)))
+    DIRS += link_layer/dutymac
+endif
 ifneq (,$(filter gnrc_pkt,$(USEMODULE)))
     DIRS += pkt
 endif

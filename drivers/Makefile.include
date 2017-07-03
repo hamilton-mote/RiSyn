@@ -100,6 +100,21 @@ endif
 ifneq (,$(filter hdc1000,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/hdc1000/include
 endif
+ifneq (,$(filter fxos8700,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/fxos8700/include
+endif
+ifneq (,$(filter tmp006,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/tmp006/include
+endif
+ifneq (,$(filter apds9007,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/apds9007/include
+endif
+ifneq (,$(filter ekmb1101111,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/ekmb1101111/include
+endif
+ifneq (,$(filter push_button,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/push_button/include
+endif
 ifneq (,$(filter lis3dh,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/lis3dh/include
 endif

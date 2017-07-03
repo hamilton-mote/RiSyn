@@ -20,6 +20,10 @@
 
 #include "auto_init.h"
 
+#ifdef MODULE_IO1_XPLAINED
+#include "io1_xplained.h"
+#endif
+
 #ifdef MODULE_SHT11
 #include "sht11.h"
 #endif
@@ -100,6 +104,10 @@ void auto_init(void)
     DEBUG("Auto init rtc module.\n");
     rtc_init();
 #endif
+#ifdef MODULE_IO1_XPLAINED
+    DEBUG("Auto init IO1 Xplained extension module.\n");
+    io1_xplained_auto_init();
+#endif
 #ifdef MODULE_SHT11
     DEBUG("Auto init SHT11 module.\n");
     sht11_init();
@@ -143,11 +151,6 @@ void auto_init(void)
 #ifdef MODULE_GCOAP
     DEBUG("Auto init gcoap module.\n");
     gcoap_init();
-#endif
-#ifdef MODULE_DEVFS
-    DEBUG("Mounting /dev\n");
-    extern void auto_init_devfs(void);
-    auto_init_devfs();
 #endif
 
 /* initialize network devices */
@@ -208,9 +211,9 @@ void auto_init(void)
     auto_init_kw2xrf();
 #endif
 
-#ifdef MODULE_NETDEV_TAP
-    extern void auto_init_netdev_tap(void);
-    auto_init_netdev_tap();
+#ifdef MODULE_NETDEV2_TAP
+    extern void auto_init_netdev2_tap(void);
+    auto_init_netdev2_tap();
 #endif
 
 #ifdef MODULE_NORDIC_SOFTDEVICE_BLE
@@ -271,10 +274,6 @@ void auto_init(void)
     extern void auto_init_lis3dh(void);
     auto_init_lis3dh();
 #endif
-#ifdef MODULE_MAG3110
-    extern void auto_init_mag3110(void);
-    auto_init_mag3110();
-#endif
 #ifdef MODULE_MMA8X5X
     extern void auto_init_mma8x5x(void);
     auto_init_mma8x5x();
@@ -299,9 +298,29 @@ void auto_init(void)
     extern void auto_init_tsl2561(void);
     auto_init_tsl2561();
 #endif
+#ifdef MODULE_APDS9007
+    extern void auto_init_apds9007(void);
+    auto_init_apds9007();
+#endif
 #ifdef MODULE_HDC1000
     extern void auto_init_hdc1000(void);
     auto_init_hdc1000();
+#endif
+#ifdef MODULE_FXOS8700
+    extern void auto_init_fxos8700(void);
+    auto_init_fxos8700();
+#endif
+#ifdef MODULE_TMP006
+    extern void auto_init_tmp006(void);
+    auto_init_tmp006();
+#endif
+#ifdef MODULE_EKMB1101111
+    extern void auto_init_ekmb1101111(void);
+    auto_init_ekmb1101111();
+#endif
+#ifdef MODULE_PUSH_BUTTON
+    extern void auto_init_push_button(void);
+    auto_init_push_button();
 #endif
 #ifdef MODULE_DHT
     extern void auto_init_dht(void);
@@ -310,22 +329,6 @@ void auto_init(void)
 #ifdef MODULE_TCS37727
     extern void auto_init_tcs37727(void);
     auto_init_tcs37727();
-#endif
-#ifdef MODULE_VEML6070
-    extern void auto_init_veml6070(void);
-    auto_init_veml6070();
-#endif
-#ifdef MODULE_IO1_XPLAINED
-    extern void auto_init_io1_xplained(void);
-    auto_init_io1_xplained();
-#endif
-#ifdef MODULE_ADXL345
-    extern void auto_init_adxl345(void);
-    auto_init_adxl345();
-#endif
-#ifdef MODULE_LSM6DSL
-    extern void auto_init_lsm6dsl(void);
-    auto_init_lsm6dsl();
 #endif
 
 #endif /* MODULE_AUTO_INIT_SAUL */

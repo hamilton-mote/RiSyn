@@ -38,7 +38,8 @@ const char *saul_class_to_str(uint8_t class_id)
         case SAUL_ACT_DIMMER:   return "ACT_DIMMER";
         case SAUL_SENSE_ANY:    return "SENSE_ANY";
         case SAUL_SENSE_BTN:    return "SENSE_BTN";
-        case SAUL_SENSE_TEMP:   return "SENSE_TEMP";
+        case SAUL_SENSE_TEMP:   return "SENSE_TEMP";        
+				case SAUL_SENSE_AMBTEMP:   return "SENSE_AMBTEMP";
         case SAUL_SENSE_HUM:    return "SENSE_HUM";
         case SAUL_SENSE_LIGHT:  return "SENSE_LIGHT";
         case SAUL_SENSE_ACCEL:  return "SENSE_ACCEL";
@@ -47,6 +48,7 @@ const char *saul_class_to_str(uint8_t class_id)
         case SAUL_SENSE_COLOR:  return "SENSE_COLOR";
         case SAUL_SENSE_PRESS:  return "SENSE_PRESS";
         case SAUL_SENSE_ANALOG: return "SENSE_ANALOG";
+        case SAUL_SENSE_OCCUP:  return "SENSE_OCCUP";
         case SAUL_CLASS_ANY:    return "CLASS_ANY";
         default:                return "CLASS_UNKNOWN";
     }

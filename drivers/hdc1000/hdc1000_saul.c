@@ -27,7 +27,10 @@ static int read_temp(void *dev, phydat_t *res)
 {
     hdc1000_t *d = (hdc1000_t *)dev;
 
-    hdc1000_read(d, &(res->val[0]), NULL);
+    if (hdc1000_read(d, &(res->val[0]), NULL)) {
+			/* Read failure */			
+			return -ECANCELED;
+		}
     memset(&(res->val[1]), 0, 2 * sizeof(int16_t));
     res->unit = UNIT_TEMP_C;
     res->scale = -2;
@@ -39,7 +42,10 @@ static int read_hum(void *dev, phydat_t *res)
 {
     hdc1000_t *d = (hdc1000_t *)dev;
 
-    hdc1000_read(d, NULL, &(res->val[0]));
+    if (hdc1000_read(d, NULL, &(res->val[0]))) {			
+			/* Read failure */			
+			return 0;
+		}
     memset(&(res->val[1]), 0, 2 * sizeof(int16_t));
     res->unit = UNIT_PERCENT;
     res->scale = -2;

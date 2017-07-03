@@ -123,7 +123,7 @@ void _xtimer_periodic_wakeup(uint32_t *last_wakeup, uint32_t period) {
         }
         mutex_lock(&mutex);
         DEBUG("xps, abs: %" PRIu32 "\n", target);
-        _xtimer_set_absolute(&timer, target);
+        _xtimer_set_absolute(&timer, target, now);
         mutex_lock(&mutex);
     }
 out:

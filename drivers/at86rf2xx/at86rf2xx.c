@@ -80,9 +80,19 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     at86rf2xx_set_txpower(dev, AT86RF2XX_DEFAULT_TXPOWER);
     /* set default options */
     at86rf2xx_set_option(dev, AT86RF2XX_OPT_AUTOACK, true);
+	/* AUTO_CSMA */
+#if AUTO_CSMA_EN
     at86rf2xx_set_option(dev, AT86RF2XX_OPT_CSMA, true);
+#else
+    at86rf2xx_set_option(dev, AT86RF2XX_OPT_CSMA, false);
+	/* CCA setting for manual CSMA */
+	tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__PHY_CC_CCA);
+	tmp |= AT86RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE;
+	at86rf2xx_reg_write(dev, AT86RF2XX_REG__PHY_CC_CCA, tmp);
+#endif
     at86rf2xx_set_option(dev, AT86RF2XX_OPT_TELL_RX_START, false);
     at86rf2xx_set_option(dev, AT86RF2XX_OPT_TELL_RX_END, true);
+
 #ifdef MODULE_NETSTATS_L2
     at86rf2xx_set_option(dev, AT86RF2XX_OPT_TELL_TX_END, true);
 #endif
@@ -111,20 +121,11 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     tmp |= (AT86RF2XX_TRX_CTRL_0_CLKM_CTRL__OFF);
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_CTRL_0, tmp);
 
-	/* AUTO_CSMA */
-#if AUTO_CSMA_EN
-    at86rf2xx_set_option(dev, AT86RF2XX_OPT_CSMA, true);
-#else
-    at86rf2xx_set_option(dev, AT86RF2XX_OPT_CSMA, false);
-	/* CCA setting for manual CSMA */
-	tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__PHY_CC_CCA);
-	tmp |= AT86RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE;
-	at86rf2xx_reg_write(dev, AT86RF2XX_REG__PHY_CC_CCA, tmp);
-#endif
 
     /* enable interrupts */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK,
                         AT86RF2XX_IRQ_STATUS_MASK__TRX_END);
+    at86rf2xx_set_option(dev, AT86RF2XX_OPT_ACK_PENDING, true);
     /* clear interrupt flags */
     at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_STATUS);
 
@@ -149,18 +150,18 @@ size_t at86rf2xx_send(at86rf2xx_t *dev, uint8_t *data, size_t len)
 
 void at86rf2xx_tx_prepare(at86rf2xx_t *dev)
 {
-    uint8_t state;
-
     dev->pending_tx++;
+
+	dev->idle_state = at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
     /* make sure ongoing transmissions are finished */
-    do {
+    /*do {
         state = at86rf2xx_get_status(dev);
     } while (state == AT86RF2XX_STATE_BUSY_RX_AACK ||
              state == AT86RF2XX_STATE_BUSY_TX_ARET);
     if (state != AT86RF2XX_STATE_TX_ARET_ON) {
         dev->idle_state = state;
     }
-    at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+    at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);*/
     dev->tx_frame_len = IEEE802154_FCS_LEN;
 }
 
@@ -178,7 +179,6 @@ void at86rf2xx_tx_exec(at86rf2xx_t *dev)
 
     /* write frame length field in FIFO */
     at86rf2xx_sram_write(dev, 0, &(dev->tx_frame_len), 1);
-
 #if AUTO_CSMA_EN
 #else
     while(!at86rf2xx_cca(dev)) {

@@ -64,28 +64,29 @@ extern "C" {
 
 #define CLOCK_USE_PLL       (0)
 
+#ifndef CLOCK_USE_FLL
 #define CLOCK_USE_FLL       (1)
+#endif
 
 #if CLOCK_USE_PLL
 #define CLOCK_PLL_MUL       (47U)               // must be >= 31 & <= 95
 #define CLOCK_PLL_DIV       (1U)                // adjust to your need
 #define CLOCK_CORECLOCK     (((CLOCK_PLL_MUL + 1) * 1000000U) / CLOCK_PLL_DIV)
 #elif CLOCK_USE_FLL
-#define CLOCK_CORECLOCK     48000000U
+#define CLOCK_CORECLOCK      48000000U
 #else
-#define CLOCK_CORECLOCK     32768U
+#define CLOCK_CORECLOCK      8000000U
 #endif
 /** @} */
 
-#define PM_BLOCKER_INITIAL { .val_u32=0x00000000 }
 
 /**
  * @name Timer peripheral configuration
  * @{
  */
-#define TIMER_NUMOF         (1U)
+#define TIMER_NUMOF         (2U)
 #define TIMER_0_EN          0
-#define TIMER_1_EN          0
+#define TIMER_1_EN          1
 #define TIMER_RTT_EN        1
 
 /* Timer 0 configuration */
@@ -206,6 +207,33 @@ static const spi_conf_t spi_config[] = {
 #define I2C_0_SDA           GPIO_PIN(PA, 16)
 #define I2C_0_SCL           GPIO_PIN(PA, 17)
 #define I2C_0_MUX           GPIO_MUX_D
+/** @} */
+
+
+/**
+ * @name Sensor configuration
+ * @{
+ */
+#define HDC1000_PARAMS_BOARD    { .i2c  = I2C_0, \
+                                  .addr = 0x40, \
+                                  .res  = HDC1000_14BIT }
+#define HDC1000_CONVERSION_TIME 150000UL
+
+#define FXOS8700_PARAMS_BOARD   { .i2c  = I2C_0, \
+                                  .addr = 0x1e }
+
+#define TMP006_PARAMS_BOARD     { .i2c  = I2C_0, \
+                                  .addr = 0x44, \
+                                  .conv_rate  = TMP006_CONFIG_CR_AS2 }
+#define TMP006_CONVERSION_TIME  550000UL  
+
+#define APDS9007_PARAMS_BOARD    { .gpio = GPIO_PIN(PA,28), \
+																	 .adc  = ADC_PIN_PA08, \
+																	 .res  = ADC_RES_16BIT }
+#define APDS9007_STABILIZATION_TIME 20000UL
+
+#define EKMB1101111_PARAMS_BOARD    { .gpio = GPIO_PIN(PA,6 ) }
+#define PUSH_BUTTON_PARAMS_BOARD    { .gpio = GPIO_PIN(PA,18) }
 /** @} */
 
 /**

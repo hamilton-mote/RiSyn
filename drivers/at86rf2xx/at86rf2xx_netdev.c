@@ -99,9 +99,8 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
     at86rf2xx_t *dev = (at86rf2xx_t *)netdev;
     const struct iovec *ptr = vector;
     size_t len = 0;
-
     at86rf2xx_tx_prepare(dev);
-
+	LED_ON;
     /* load packet data into FIFO */
     for (unsigned i = 0; i < count; i++, ptr++) {
         /* current packet data + FCS too long */
@@ -115,12 +114,14 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
 #endif
         len = at86rf2xx_tx_load(dev, ptr->iov_base, ptr->iov_len, len);
     }
+	LED_OFF;
 
     /* send data out directly if pre-loading id disabled */
-    if (!(dev->netdev.flags & AT86RF2XX_OPT_PRELOADING)) {
+	if (!(dev->netdev.flags & AT86RF2XX_OPT_PRELOADING)) {
         at86rf2xx_tx_exec(dev);
     }
-    /* return the number of bytes that were actually send out */
+	
+/* return the number of bytes that were actually send out */
     return (int)len;
 }
 
@@ -315,6 +316,10 @@ static int _get(netdev_t *netdev, netopt_t opt, void *val, size_t max_len)
             *((uint16_t *)val) = at86rf2xx_get_txpower(dev);
             res = sizeof(uint16_t);
             break;
+		case NETOPT_ACK_PENDING:
+			at86rf2xx_set_option(dev, AT86RF2XX_OPT_ACK_PENDING,
+						         ((bool *)val)[0]);
+            break;
 
         case NETOPT_RETRANS:
             assert(max_len >= sizeof(uint8_t));
@@ -358,7 +363,7 @@ static int _set(netdev_t *netdev, netopt_t opt, void *val, size_t len)
     }
 
     /* temporarily wake up if sleeping */
-    if (old_state == AT86RF2XX_STATE_SLEEP) {
+    if (old_state == AT86RF2XX_STATE_SLEEP && opt != NETOPT_STATE) {
         at86rf2xx_assert_awake(dev);
     }
 
@@ -427,6 +432,11 @@ static int _set(netdev_t *netdev, netopt_t opt, void *val, size_t len)
             at86rf2xx_set_option(dev, AT86RF2XX_OPT_AUTOACK,
                                  ((bool *)val)[0]);
             /* don't set res to set netdev_ieee802154_t::flags */
+            break;
+
+        case NETOPT_ACK_PENDING:
+            at86rf2xx_set_option(dev, AT86RF2XX_OPT_ACK_PENDING,
+                                 ((bool *)val)[0]);
             break;
 
         case NETOPT_RETRANS:
@@ -555,18 +565,30 @@ static void _isr(netdev_t *netdev)
              * there are none */
             assert(dev->pending_tx != 0);
             if ((--dev->pending_tx) == 0) {
+#if MODULE_GNRC_DUTYMAC
+#if LEAF_NODE
+				/* Wake up for a while when receiving an ACK with pending bit */
+				if (trac_status == AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING) {
+	                dev->idle_state = AT86RF2XX_STATE_RX_AACK_ON;		
+				}
+#endif
+#endif
                 at86rf2xx_set_state(dev, dev->idle_state);
                 DEBUG("[at86rf2xx] return to state 0x%x\n", dev->idle_state);
             }
 
             DEBUG("[at86rf2xx] EVT - TX_END\n");
 
+	LED_ON;
             if (netdev->event_callback && (dev->netdev.flags & AT86RF2XX_OPT_TELL_TX_END)) {
                 switch (trac_status) {
                     case AT86RF2XX_TRX_STATE__TRAC_SUCCESS:
-                    case AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING:
                         netdev->event_callback(netdev, NETDEV_EVENT_TX_COMPLETE);
                         DEBUG("[at86rf2xx] TX SUCCESS\n");
+                        break;
+                    case AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING:
+                        netdev->event_callback(netdev, NETDEV_EVENT_TX_COMPLETE_PENDING);
+                        DEBUG("[at86rf2xx] TX SUCCESS PENDING\n");
                         break;
                     case AT86RF2XX_TRX_STATE__TRAC_NO_ACK:
                         netdev->event_callback(netdev, NETDEV_EVENT_TX_NOACK);
@@ -582,5 +604,6 @@ static void _isr(netdev_t *netdev)
                 }
             }
         }
+		LED_OFF;
     }
 }
