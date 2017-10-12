@@ -67,14 +67,14 @@ extern "C" {
   */
 #if CLOCK_USE_OSCULP32_DFLL
 #define AT86RF2XX_PARAMS_BOARD      {.spi = SPI_DEV(0), \
-                                     .spi_clk = SPI_CLK_5MHZ, \
+                                     .spi_clk = SPI_CLK_8MHZ, \
                                      .cs_pin = GPIO_PIN(PB, 31), \
                                      .int_pin = GPIO_PIN(PB, 0), \
                                      .sleep_pin = GPIO_PIN(PA, 20), \
                                      .reset_pin = GPIO_PIN(PB, 15)}
 #else
 #define AT86RF2XX_PARAMS_BOARD      {.spi = SPI_DEV(0), \
-                                     .spi_clk = SPI_CLK_1MHZ, \
+                                     .spi_clk = SPI_CLK_4MHZ, \
                                      .cs_pin = GPIO_PIN(PB, 31), \
                                      .int_pin = GPIO_PIN(PB, 0), \
                                      .sleep_pin = GPIO_PIN(PA, 20), \
