@@ -13,6 +13,9 @@ endif
 ifneq (,$(filter kw2xrf,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/kw2xrf/include
 endif
+ifneq (,$(filter ekmb1101111,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/ekmb1101111/include
+endif
 ifneq (,$(filter io1_xplained,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/io1_xplained/include
 endif
@@ -132,7 +135,4 @@ ifneq (,$(filter adcxx1c,$(USEMODULE)))
 endif
 ifneq (,$(filter sx127%,$(USEMODULE)))
     USEMODULE_INCLUDES += $(RIOTBASE)/drivers/sx127x/include
-endif
-ifneq (,$(filter ekmb1101111,$(USEMODULE)))
-    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/ekmb1101111/include
 endif
