@@ -142,6 +142,9 @@ endif
 ifneq (,$(filter dynamixel,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/dynamixel/include
 endif
+ifneq (,$(filter apds9007,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/apds9007/include
+endif
 ifneq (,$(filter lsm6dsl,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/lsm6dsl/include
 endif
