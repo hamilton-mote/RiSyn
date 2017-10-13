@@ -67,11 +67,12 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     /* get an 8-byte unique ID to use as hardware address */
     luid_get(addr_long.uint8, IEEE802154_LONG_ADDRESS_LEN);
     /* make sure we mark the address as non-multicast and not globally unique */
-    addr_long.uint8[0] &= ~(0x01);
-    addr_long.uint8[0] |=  (0x02);
+
+  //  addr_long.uint8[0] &= ~(0x01);
+  //  addr_long.uint8[0] |=  (0x02);
     /* set short and long address */
-    at86rf2xx_set_addr_long(dev, ntohll(addr_long.uint64.u64));
-    at86rf2xx_set_addr_short(dev, ntohs(addr_long.uint16[0].u16));
+    at86rf2xx_set_addr_long(dev, addr_long.uint64.u64);
+    at86rf2xx_set_addr_short(dev, addr_long.uint16[3].u16);
 
     /* set default PAN id */
     at86rf2xx_set_pan(dev, AT86RF2XX_DEFAULT_PANID);
@@ -111,6 +112,17 @@ void at86rf2xx_reset(at86rf2xx_t *dev)
     tmp &= ~(AT86RF2XX_TRX_CTRL_0_MASK__CLKM_SHA_SEL);
     tmp |= (AT86RF2XX_TRX_CTRL_0_CLKM_CTRL__OFF);
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_CTRL_0, tmp);
+
+	/* AUTO_CSMA */
+#if AUTO_CSMA_EN
+    at86rf2xx_set_option(dev, AT86RF2XX_OPT_CSMA, true);
+#else
+    at86rf2xx_set_option(dev, AT86RF2XX_OPT_CSMA, false);
+	/* CCA setting for manual CSMA */
+	tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__PHY_CC_CCA);
+	tmp |= AT86RF2XX_PHY_CC_CCA_DEFAULT__CCA_MODE;
+	at86rf2xx_reg_write(dev, AT86RF2XX_REG__PHY_CC_CCA, tmp);
+#endif
 
     /* enable interrupts */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__IRQ_MASK,
@@ -172,6 +184,20 @@ void at86rf2xx_tx_exec(at86rf2xx_t *dev)
 
     /* write frame length field in FIFO */
     at86rf2xx_sram_write(dev, 0, &(dev->tx_frame_len), 1);
+
+#if AUTO_CSMA_EN
+#else
+    while(!at86rf2xx_cca(dev)) {
+      at86rf2xx_set_state(dev, AT86RF2XX_STATE_RX_AACK_ON); /* Listening during backoff */
+      xtimer_usleep((rand()%(2^BE))*320);
+      at86rf2xx_set_state(dev, AT86RF2XX_STATE_TX_ARET_ON);
+      printf("CCA busy %u\n", (2^BE)*320);
+      if (BE < MAX_BE) {
+        BE++;
+      }
+    }
+#endif
+
     /* trigger sending of pre-loaded frame */
     at86rf2xx_reg_write(dev, AT86RF2XX_REG__TRX_STATE,
                         AT86RF2XX_TRX_STATE__TX_START);
