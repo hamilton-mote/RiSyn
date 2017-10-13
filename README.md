@@ -1,3 +1,56 @@
+# Hamilton-combined v10.2 - 10/12/2017
+
+Board support for the Hamilton mote is maintained as a set of rebasing branches
+that will at some stage be pushed upstream. At intervals, a "combined" branch
+is created so that working with the hamilton is as easy as cloning this repo.
+The v10.0 branch was created with the following commands
+
+```bash
+git clone https://github.com/hamilton-mote/RIOT-OS.git
+cd RIOT-OS
+git remote add upstream https://github.com/RIOT-OS/RIOT.git
+git fetch upstream
+git checkout upstream/master # this was 99e6324717c647e80c7ad4c0
+git checkout -b hamilton-combined-v10.2
+
+git fetch upstream pull/7308/head:pr-7308
+
+git merge --no-ff origin/hamilton-board
+git merge --no-ff origin/hamilton-clock
+git merge --no-ff origin/hamilton-adc
+git merge --no-ff origin/hamilton-lasmac
+
+
+git merge --no-ff origin/hamilton-pushbutton
+git merge --no-ff origin/hamilton-fxos8700
+git merge --no-ff origin/hamilton-ekmb
+git merge --no-ff origin/hamilton-apds9007
+# Some trivial conflicts
+git merge --no-ff origin/hamilton-tmp006
+
+# now merge in PM fix
+git merge --no-ff pr-7308
+
+# merge in endianness fix
+git merge --no-ff origin/hamilton-radio-extra
+
+# merge in xtimer hotfix
+git merge hamilton-xtimer-improvement
+
+# add in this readme and commit
+# then push
+git push --set-upstream origin hamilton-combined-v10.2
+
+
+If you want to contribute, please consider contributing upstream. If that is
+not appropriate (you have hamilton-specific changes) please submit a PR
+as changes on top of master (which will track upstream) as this makes rebasing
+easier. If that is not possible (you are editing hamilton-specific files) you
+can base your PR on a combined branch, but please make clear which version
+you used. We recommend including this information in your branches, such as
+`c10.2-my-feature`.
+
+upstream readme:
                           ZZZZZZ
                         ZZZZZZZZZZZZ
                       ZZZZZZZZZZZZZZZZ
