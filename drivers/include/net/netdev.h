@@ -225,6 +225,7 @@ typedef enum {
     NETDEV_EVENT_ISR,                       /**< driver needs it's ISR handled */
     NETDEV_EVENT_RX_STARTED,                /**< started to receive a packet */
     NETDEV_EVENT_RX_COMPLETE,               /**< finished receiving a packet */
+    NETDEV_EVENT_RX_DATAREQ,                /**< receiving a dataReq packet */
     NETDEV_EVENT_TX_STARTED,                /**< started to transfer a packet */
     NETDEV_EVENT_TX_COMPLETE,               /**< transfer packet complete */
     NETDEV_EVENT_TX_COMPLETE_DATA_PENDING,  /**< transfer packet complete and data pending flag */

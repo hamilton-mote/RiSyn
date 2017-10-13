@@ -97,6 +97,16 @@ typedef struct gnrc_netdev {
      */
     int (*send)(struct gnrc_netdev *dev, gnrc_pktsnip_t *snip);
 
+#ifdef MODULE_GNRC_LASMAC
+    /**
+     * @brief Send a data request using this device
+     *
+     * This function should make a data request (MAC command) 
+	   for the corresponding link layer type.
+     */
+    int (*send_dataReq)(struct gnrc_netdev *dev);
+#endif
+
     /**
      * @brief Receive a pktsnip from this device
      *

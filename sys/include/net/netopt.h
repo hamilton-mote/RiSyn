@@ -146,7 +146,9 @@ typedef enum {
     NETOPT_PROMISCUOUSMODE,     /**< en/disable promiscuous mode or read
                                  *   the current state */
     NETOPT_AUTOACK,             /**< en/disable link layer auto ACKs or read
-                                 *   the current state */
+                                 *   the current state */    
+    NETOPT_ACK_PENDING,         /**< en/disable link layer auto ACKs 
+                                 *   with pending bit */
     NETOPT_ACK_REQ,             /**< en/disable acknowledgement requests or
                                  *   read the current state */
     NETOPT_RETRANS,             /**< get/set the maximum number of

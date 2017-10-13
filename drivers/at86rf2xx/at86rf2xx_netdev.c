@@ -457,6 +457,11 @@ static int _set(netdev_t *netdev, netopt_t opt, const void *val, size_t len)
             /* don't set res to set netdev_ieee802154_t::flags */
             break;
 
+		case NETOPT_ACK_PENDING:
+			at86rf2xx_set_option(dev, AT86RF2XX_OPT_ACK_PENDING,
+						         ((bool *)val)[0]);
+            break;
+
         case NETOPT_RETRANS:
             assert(len <= sizeof(uint8_t));
             at86rf2xx_set_max_retries(dev, *((const uint8_t *)val));
@@ -583,6 +588,14 @@ static void _isr(netdev_t *netdev)
              * there are none */
             assert(dev->pending_tx != 0);
             if ((--dev->pending_tx) == 0) {
+#if MODULE_GNRC_LASMAC
+#if LEAF_NODE
+				/* Wake up for a while when receiving an ACK with pending bit */
+				if (trac_status == AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING) {
+	                dev->idle_state = AT86RF2XX_STATE_RX_AACK_ON;		
+				}
+#endif
+#endif
                 at86rf2xx_set_state(dev, dev->idle_state);
                 DEBUG("[at86rf2xx] return to state 0x%x\n", dev->idle_state);
             }

@@ -376,6 +376,12 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
                 tmp &= ~(AT86RF2XX_CSMA_SEED_1__AACK_DIS_ACK);
                 at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
                 break;
+            case AT86RF2XX_OPT_ACK_PENDING:
+                DEBUG("[at86rf2xx] opt: enabling pending ACKs\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
+                tmp |= AT86RF2XX_CSMA_SEED_1__AACK_SET_PD;
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
+                break;
             case AT86RF2XX_OPT_TELL_RX_START:
                 DEBUG("[at86rf2xx] opt: enabling SFD IRQ\n");
                 tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__IRQ_MASK);
@@ -415,6 +421,12 @@ void at86rf2xx_set_option(at86rf2xx_t *dev, uint16_t option, bool state)
                 DEBUG("[at86rf2xx] opt: disabling auto ACKs\n");
                 tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
                 tmp |= AT86RF2XX_CSMA_SEED_1__AACK_DIS_ACK;
+                at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
+                break;
+            case AT86RF2XX_OPT_ACK_PENDING:
+                DEBUG("[at86rf2xx] opt: disabling ACK pending\n");
+                tmp = at86rf2xx_reg_read(dev, AT86RF2XX_REG__CSMA_SEED_1);
+                tmp &= ~(AT86RF2XX_CSMA_SEED_1__AACK_SET_PD);
                 at86rf2xx_reg_write(dev, AT86RF2XX_REG__CSMA_SEED_1, tmp);
                 break;
             case AT86RF2XX_OPT_TELL_RX_START:
