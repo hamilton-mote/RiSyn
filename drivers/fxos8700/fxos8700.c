@@ -160,6 +160,10 @@ int fxos8700_read(fxos8700_t* dev)
 {
     uint8_t data[12];
     uint8_t ready = 0;
+    
+    if (fxos8700_set_active(dev)) {
+        return -1;
+    }
 
     while(!(ready & 0x08)) {
         fxos8700_read_regs(dev, FXOS8700_REG__STATUS, &ready, 1);
@@ -170,6 +174,10 @@ int fxos8700_read(fxos8700_t* dev)
 
     /* Read all data at once */
     if (fxos8700_read_regs(dev, FXOS8700_REG_OUT_X_MSB, &data[0], 12)) {
+        return -1;
+    }
+
+    if (fxos8700_set_idle(dev)) {
         return -1;
     }
 
