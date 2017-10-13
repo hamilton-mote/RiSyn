@@ -276,8 +276,16 @@ static const adc_conf_chan_t adc_channels[] = {
 };
 
 #define ADC_0_CHANNELS                     (2U)
-#define ADC_NUMOF                          ADC_0_CHANNELS
+#define ADC_NUMOF                          0//ADC_0_CHANNELS
 /** @} */
+
+/**
+ * @name Power management configuration for PM_Layered
+ * @{
+ */
+#define PM_BLOCKER_INITIAL  { .val_u32 = 0x01010101 }
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif

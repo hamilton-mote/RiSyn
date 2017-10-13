@@ -24,15 +24,20 @@
 #include <string.h>
 
 #include "periph/cpuid.h"
+#include "board.h"
 
 #define WORD0               (*(volatile uint32_t *)0x0080A00C)
 #define WORD1               (*(volatile uint32_t *)0x0080A040)
 #define WORD2               (*(volatile uint32_t *)0x0080A044)
 #define WORD3               (*(volatile uint32_t *)0x0080A048)
 
-
 void cpuid_get(void *id)
 {
+#ifdef HAS_FACTORY_BLCOK
+    memset(id, 0, CPUID_LEN);
+    memcpy(id, fb_eui64, 8);
+#else
     uint32_t addr[] = { WORD0, WORD1, WORD2, WORD3 };
-    memcpy(id, &addr[0], CPUID_LEN);
+    memcpy(id, (void *)addr, CPUID_LEN);
+#endif
 }
