@@ -324,6 +324,10 @@ void auto_init(void)
     extern void auto_init_tsl2561(void);
     auto_init_tsl2561();
 #endif
+#ifdef MODULE_PUSH_BUTTON
+    extern void auto_init_push_button(void);
+    auto_init_push_button();
+#endif
 #ifdef MODULE_HDC1000
     extern void auto_init_hdc1000(void);
     auto_init_hdc1000();

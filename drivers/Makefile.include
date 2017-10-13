@@ -49,6 +49,9 @@ endif
 ifneq (,$(filter mma8x5x,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/mma8x5x/include
 endif
+ifneq (,$(filter mma7660,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/mma7660/include
+endif
 ifneq (,$(filter mag3110,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/mag3110/include
 endif
@@ -57,6 +60,9 @@ ifneq (,$(filter mpu9150,$(USEMODULE)))
 endif
 ifneq (,$(filter my9221,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/my9221/include
+endif
+ifneq (,$(filter push_button,$(USEMODULE)))
+    USEMODULE_INCLUDES += $(RIOTBASE)/drivers/push_button/include
 endif
 ifneq (,$(filter ina220,$(USEMODULE)))
   USEMODULE_INCLUDES += $(RIOTBASE)/drivers/ina220/include
