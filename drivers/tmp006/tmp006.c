@@ -31,6 +31,7 @@
 #include "periph/i2c.h"
 #include "tmp006.h"
 #include "tmp006_regs.h"
+#include "xtimer.h"
 
 #define ENABLE_DEBUG                (0)
 #include "debug.h"
@@ -229,6 +230,11 @@ int tmp006_read_temperature(const tmp006_t *dev, int16_t *ta, int16_t *to)
     int16_t rawtemp, rawvolt;
     float tamb, tobj;
     uint8_t drdy;
+
+    if (tmp006_set_active(dev)) {
+        return TMP006_ERROR;
+    }
+    xtimer_usleep(TMP006_CONVERSION_TIME);
     tmp006_read(dev, &rawvolt, &rawtemp, &drdy);
 
     if (!drdy) {
@@ -237,6 +243,10 @@ int tmp006_read_temperature(const tmp006_t *dev, int16_t *ta, int16_t *to)
     tmp006_convert(rawvolt, rawtemp,  &tamb, &tobj);
     *ta = (int16_t)(tamb*100);
     *to = (int16_t)(tobj*100);
+    
+    if (tmp006_set_standby(dev)) {
+        return TMP006_ERROR;
+    }
 
     return TMP006_OK;
 }
