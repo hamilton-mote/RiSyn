@@ -39,6 +39,7 @@ volatile uint32_t _xtimer_high_cnt = 0;
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
 volatile uint32_t prev_s = 0xffffffff;
 volatile uint32_t prev_x = 0xffffffff;
+bool init = false;
 #endif
 
 static inline void xtimer_spin_until(uint32_t value);
@@ -70,6 +71,10 @@ static inline void xtimer_spin_until(uint32_t target) {
 #endif
     while (_xtimer_lltimer_now() > target);
     while (_xtimer_lltimer_now() < target);
+#if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
+    prev_x = _xtimer_lltimer_now();
+    prev_s = _stimer_lltimer_now();
+#endif
 }
 
 void xtimer_init(void)
@@ -82,6 +87,8 @@ void xtimer_init(void)
      * STIMER must be faster than XTIMER (e.g., 8 MHz or 48 MHz).
      */
     timer_init(STIMER_DEV, STIMER_HZ, _periph_timer_callback, NULL);
+    prev_x = _xtimer_lltimer_now();
+    prev_s = _stimer_lltimer_now();
 #endif
     /* register initial overflow tick */
     _lltimer_set(0xFFFFFFFF);
@@ -165,9 +172,20 @@ void _xtimer_set(xtimer_t *timer, uint32_t offset)
         _shoot(timer);
     }
     else {
+#if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
+        if (!init) {
+            prev_x = _xtimer_lltimer_now();
+            prev_s = _stimer_lltimer_now();
+            init = true;
+        }
+        prev_x = _xtimer_now();
+        uint32_t target = prev_x + offset;
+        _xtimer_set_absolute(timer, target, prev_x);
+#else
         uint32_t now = _xtimer_now();
         uint32_t target = now + offset;
         _xtimer_set_absolute(timer, target, now);
+#endif
     }
 }
 
@@ -554,6 +572,9 @@ overflow:
         _next_period();
         reference = 0;
         now = _xtimer_lltimer_now();
+#if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
+        prev_x = now;
+#endif
         goto overflow;
     }
 
@@ -564,6 +585,9 @@ overflow:
         /* make sure we're not setting a time in the past */
         if (next_target < (now + XTIMER_ISR_BACKOFF)) {
             now = _xtimer_lltimer_now();
+#if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
+            prev_x = now;
+#endif
             goto overflow;
         }
         _in_handler = 0;
@@ -589,6 +613,9 @@ overflow:
             _next_period();
             reference = 0;
             now = _xtimer_lltimer_now();
+#if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
+            prev_x = now;
+#endif
             goto overflow;
         }
         else {
@@ -599,6 +626,9 @@ overflow:
                 _next_period();
                 reference = 0;
                 now = _xtimer_lltimer_now();
+#if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
+                prev_x = now;
+#endif
                 goto overflow;
             }
         }
