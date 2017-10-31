@@ -200,6 +200,11 @@ void auto_init(void)
     auto_init_ethos();
 #endif
 
+#ifdef MODULE_RETHOS
+    extern void auto_init_rethos(void);
+    auto_init_rethos();
+#endif
+
 #ifdef MODULE_SLIPDEV
     extern void auto_init_slipdev(void);
     auto_init_slipdev();
