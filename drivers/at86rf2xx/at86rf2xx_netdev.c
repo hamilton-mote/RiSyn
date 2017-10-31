@@ -35,6 +35,9 @@
 #include "at86rf2xx_internal.h"
 #include "at86rf2xx_registers.h"
 
+#define TX_TOGGLE (PORT->Group[0].OUTTGL.reg = (1<<27))
+#define RX_TOGGLE (PORT->Group[1].OUTTGL.reg = (1<<23))
+
 #define ENABLE_DEBUG (0)
 #include "debug.h"
 
@@ -120,6 +123,10 @@ static int _send(netdev_t *netdev, const struct iovec *vector, unsigned count)
     if (!(dev->netdev.flags & AT86RF2XX_OPT_PRELOADING)) {
         at86rf2xx_tx_exec(dev);
     }
+
+    /* toggle the "TX" LED on Hamilton border router */
+    TX_TOGGLE;
+
     /* return the number of bytes that were actually send out */
     return (int)len;
 }
@@ -145,6 +152,10 @@ static int _recv(netdev_t *netdev, void *buf, size_t len, void *info)
         at86rf2xx_fb_stop(dev);
         return pkt_len;
     }
+
+    /* toggle the "RX" LED on Hamilton border router */
+    RX_TOGGLE;
+
     /* not enough space in buf */
     if (pkt_len > len) {
         at86rf2xx_fb_stop(dev);
@@ -592,7 +603,7 @@ static void _isr(netdev_t *netdev)
 #if LEAF_NODE
 				/* Wake up for a while when receiving an ACK with pending bit */
 				if (trac_status == AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING) {
-	                dev->idle_state = AT86RF2XX_STATE_RX_AACK_ON;		
+	                dev->idle_state = AT86RF2XX_STATE_RX_AACK_ON;
 				}
 #endif
 #endif
