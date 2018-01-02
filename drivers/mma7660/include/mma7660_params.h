@@ -49,10 +49,13 @@ extern "C" {
 #define MMA7660_PARAM_FILT        (1)
 #endif
 
-#define MMA7660_PARAMS_DEFAULT    {.i2c = MMA7660_PARAM_I2C, \
-                                   .addr = MMA7660_PARAM_ADDR,
-                                   .amsr = MMA7660_PARAM_AMSR,
-                                   .filt = MMA7660_PARAM_FILT}
+#ifndef MMA7660_PARAMS
+#define MMA7660_PARAMS            { .i2c = MMA7660_PARAM_I2C,   \
+                                    .addr = MMA7660_PARAM_ADDR, \
+                                    .amsr = MMA7660_PARAM_AMSR, \
+                                    .awsr = MMA7660_PARAM_AWSR, \
+                                    .filt = MMA7660_PARAM_FILT}
+#endif
 /**@}*/
 
 /**
@@ -60,11 +63,7 @@ extern "C" {
  */
 static const mma7660_params_t mma7660_params[] =
 {
-#ifdef MMA7660_PARAMS_BOARD
-    MMA7660_PARAMS_BOARD,
-#else
-    MMA7660_PARAMS_DEFAULT,
-#endif
+    MMA7660_PARAMS,
 };
 
 #ifdef __cplusplus
