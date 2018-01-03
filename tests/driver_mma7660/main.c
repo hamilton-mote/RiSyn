@@ -43,9 +43,10 @@ int main(void)
     }
 
     while (1) {
-        int16_t x, y, z;
-        mma7660_read(&dev, &x, &y, &z);
-        printf("Acceleration [in mg]: X: %d Y: %d Z: %d\n", x, y, z);
+        mma7660_data_t data;
+        mma7660_read(&dev, &data);
+        printf("Acceleration [in mg]: X: %d Y: %d Z: %d\n",
+               data.x, data.y, data.z);
         xtimer_usleep(SLEEP);
     }
 
