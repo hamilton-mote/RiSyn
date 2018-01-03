@@ -200,6 +200,8 @@ int mma7660_config_samplerate(const mma7660_t *dev, uint8_t amsr, uint8_t awsr, 
  * @brief   Configure the tap detection
  *
  * @param[in] dev           device descriptor
+ * @param[in] pdth          pulse detection
+ * @param[in] enabled_axes  enabled axes
  *
  * See page 21 of http://www.nxp.com/files/sensors/doc/data_sheet/MMA7660FC.pdf
  * for details about the parameters
@@ -213,6 +215,7 @@ int mma7660_config_pdet(const mma7660_t *dev, uint8_t pdth, uint8_t enabled_axes
  * @brief   Configure the tap detection debounce count
  *
  * @param[in] dev           device descriptor
+ * @param[in] pd            pulse debounce
  *
  * See page 21 of http://www.nxp.com/files/sensors/doc/data_sheet/MMA7660FC.pdf
  * for details about the debouncer
