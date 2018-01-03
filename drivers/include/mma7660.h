@@ -64,6 +64,15 @@ typedef struct
 } mma7660_t;
 
 /**
+ * @brief   Data type for the result data
+ */
+typedef struct {
+    int16_t x;                  /**< acceleration in X direction */
+    int16_t y;                  /**< acceleration in Y direction */
+    int16_t z;                  /**< acceleration in Z direction */
+} mma7660_data_t;
+
+/**
  * @name    MMA7660 constants
  * @{
  */
@@ -217,14 +226,12 @@ int mma7660_config_pd(const mma7660_t *dev, uint8_t pd) ;
  * @brief   Read the acceleration counts converted to mG
  *
  * @param[in] dev           device descriptor
- * @param[out] x            the X axis value in mG
- * @param[out] y            the Y axis value in mG
- * @param[out] z            the Z axis value in mG
+ * @param[out] data         the acceleration data
  *
  * @return                  MMA7660_OK on success
  * @return                 -MMA7660_I2C_READ_ERR on i2c bus read error
  */
-int mma7660_read(const mma7660_t *dev, int16_t *x, int16_t *y, int16_t *z);
+int mma7660_read(const mma7660_t *dev, mma7660_data_t *data);
 
 /**
  * @brief   Read the acceleration counts (unconverted)

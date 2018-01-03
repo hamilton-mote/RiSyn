@@ -23,6 +23,7 @@
 #define MMA7660_PARAMS_H
 
 #include "board.h"
+#include "saul_reg.h"
 #include "mma7660.h"
 
 #ifdef __cplusplus
@@ -30,7 +31,7 @@ extern "C" {
 #endif
 
 /**
- * @brief   Set default configuration parameters for MMA7660 devices
+ * @name    Set default configuration parameters for MMA7660 devices
  * @{
  */
 #ifndef MMA7660_PARAM_I2C
@@ -56,6 +57,9 @@ extern "C" {
                                     .awsr = MMA7660_PARAM_AWSR, \
                                     .filt = MMA7660_PARAM_FILT}
 #endif
+#ifndef MMA7660_SAUL_INFO
+#define MMA7660_SAUL_INFO         { .name = "mma8652" }
+#endif
 /**@}*/
 
 /**
@@ -64,6 +68,14 @@ extern "C" {
 static const mma7660_params_t mma7660_params[] =
 {
     MMA7660_PARAMS,
+};
+
+/**
+ * @brief   Additional meta information to keep in the SAUL registry
+ */
+static const saul_reg_info_t mma7660_saul_info[] =
+{
+    MMA7660_SAUL_INFO
 };
 
 #ifdef __cplusplus

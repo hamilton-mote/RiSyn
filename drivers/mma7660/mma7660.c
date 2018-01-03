@@ -228,7 +228,7 @@ int mma7660_read_counts(const mma7660_t *dev, int8_t *x, int8_t *y, int8_t *z)
     return -MMA7660_READ_ERR;
 }
 
-int mma7660_read(const mma7660_t *dev, int16_t *x, int16_t *y, int16_t *z)
+int mma7660_read(const mma7660_t *dev, mma7660_data_t *data)
 {
     int8_t countx, county, countz;
     int rv;
@@ -238,9 +238,9 @@ int mma7660_read(const mma7660_t *dev, int16_t *x, int16_t *y, int16_t *z)
         return rv;
     }
 
-    *x = ((int16_t)countx) * MMA7660_MG_PER_COUNT;
-    *y = ((int16_t)county) * MMA7660_MG_PER_COUNT;
-    *z = ((int16_t)countz) * MMA7660_MG_PER_COUNT;
+    data->x = ((int16_t)countx) * MMA7660_MG_PER_COUNT;
+    data->y = ((int16_t)county) * MMA7660_MG_PER_COUNT;
+    data->z = ((int16_t)countz) * MMA7660_MG_PER_COUNT;
 
     return MMA7660_OK;
 }
