@@ -48,5 +48,5 @@ extern "C"
 }
 #endif
 
-#endif
+#endif /* MMA8X5X_REG_H */
 /** @} */

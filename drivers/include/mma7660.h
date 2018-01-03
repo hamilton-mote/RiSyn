@@ -257,5 +257,5 @@ int mma7660_read_counts(const mma7660_t *dev, int8_t *x, int8_t *y, int8_t *z);
 }
 #endif
 
-#endif
+#endif /* MMA7660_H */
 /** @} */
