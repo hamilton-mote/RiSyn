@@ -1,11 +1,13 @@
 OPENTHREAD_DIR = $(RIOTBASE)/pkg/openthread
+OPENTHREAD_SOURCEDIR = $(RIOTBASE)/pkg/openthread/source
 
 INCLUDES += -I$(OPENTHREAD_DIR)/include \
             -I$(OPENTHREAD_DIR)/include/openthread \
-            -I$(BINDIRBASE)/pkg/$(BOARD)/openthread/output/include \
-            -I$(BINDIRBASE)/pkg/$(BOARD)/openthread/include/openthread \
+            -I$(OPENTHREAD_SOURCEDIR)/output/include \
+            -I$(OPENTHREAD_SOURCEDIR)/include \
+            -I$(OPENTHREAD_SOURCEDIR)/include/openthread \
+            -I$(OPENTHREAD_SOURCEDIR)/include/openthread/platform \
 
 ifneq (,$(filter openthread_contrib,$(USEMODULE)))
   DIRS += $(OPENTHREAD_DIR)/contrib
-  DIRS += $(OPENTHREAD_DIR)/contrib/netdev
 endif

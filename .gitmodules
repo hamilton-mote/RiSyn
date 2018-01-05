@@ -1,0 +1,4 @@
+[submodule "pkg/openthread/source"]
+	path = pkg/openthread/source
+	url = https://github.com/Hyungsin/openthread.git
+	branch = openthread-v1.0

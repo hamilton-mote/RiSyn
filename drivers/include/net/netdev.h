@@ -223,6 +223,7 @@ enum {
  */
 typedef enum {
     NETDEV_EVENT_ISR,                       /**< driver needs it's ISR handled */
+    NETDEV_EVENT_ISR2,                      /**< driver needs it's another ISR handled */
     NETDEV_EVENT_RX_STARTED,                /**< started to receive a packet */
     NETDEV_EVENT_RX_COMPLETE,               /**< finished receiving a packet */
     NETDEV_EVENT_RX_DATAREQ,                /**< receiving a dataReq packet */

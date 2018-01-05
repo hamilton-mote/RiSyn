@@ -17,7 +17,8 @@
  *
  * @file
  *
- * @author  José Ignacio Alamos <jialamos@uc.cl>
+ * @author      Jose Ignacio Alamos <jialamos@uc.cl>
+ * @author      Baptiste Clenet <bapclenet@gmail.com>
  */
 
 #ifndef OT_H
@@ -33,19 +34,50 @@ extern "C" {
 #include "net/gnrc/netdev.h"
 #include "thread.h"
 #include "openthread/types.h"
+#include "openthread/platform/radio.h"
 
-#define OPENTHREAD_XTIMER_MSG_TYPE_EVENT (0x2235)        /**< xtimer message receiver event*/
-#define OPENTHREAD_NETDEV_MSG_TYPE_EVENT (0x2236)        /**< message received from driver */
-#define OPENTHREAD_SERIAL_MSG_TYPE_EVENT (0x2237)        /**< event indicating a serial (UART) message was sent to OpenThread */
-#define OPENTHREAD_MSG_TYPE_RECV         (0x2238)        /**< event for frame reception */
-#define OPENTHREAD_JOB_MSG_TYPE_EVENT    (0x2240)        /**< event indicating an OT_JOB message */
+/**< xtimer message receiver event */
+#define OPENTHREAD_XTIMER_MSG_TYPE_EVENT                    (0x2235)
+/**< event indicating a serial (UART) message was sent to OpenThread */
+#define OPENTHREAD_SERIAL_MSG_TYPE_EVENT                    (0x2236)
+/**< event for frame reception */
+#define OPENTHREAD_NETDEV_MSG_TYPE_EVENT                    (0x2239)
+/**< event indicating an OT_JOB message */
+#define OPENTHREAD_JOB_MSG_TYPE_EVENT                       (0x2241)
+/**< number of serial reception buffer */
+#define OPENTHREAD_NUMBER_OF_SERIAL_BUFFER                  (1U)
+/**< sizeof in bytes the two first members of she serial structure */
+#define OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF               (4U)
+#ifdef MODULE_OPENTHREAD_NCP_FTD
+/**< sizeof the serial buffer */
+#define OPENTHREAD_SERIAL_BUFFER_SIZE                       OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF + 200
+#else
+/**< sizeof the serial buffer */
+#define OPENTHREAD_SERIAL_BUFFER_SIZE                       OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF + 100
+#endif
+/**< sizeof the spinel payload data */
+#define OPENTHREAD_SERIAL_BUFFER__PAYLOAD_SIZE              OPENTHREAD_SERIAL_BUFFER_SIZE - OPENTHREAD_SIZEOF_LENGTH_AND_FREEBUFF
+/**< error when no more buffer available */
+#define OPENTHREAD_ERROR_NO_EMPTY_SERIAL_BUFFER             -1
+/**< serial buffer ready to use */
+#define OPENTHREAD_SERIAL_BUFFER_STATUS_FREE                (0x0001)
+/**< serial buffer ready for processsing */
+#define OPENTHREAD_SERIAL_BUFFER_STATUS_READY_TO_PROCESS    (0x0002)
+/**< serial buffer payload full */
+#define OPENTHREAD_SERIAL_BUFFER_STATUS_FULL                (0x0004)
+/**< Max length for IEEE802154 frame */
+#define IEEE802154_MAX_LENGTH                               (127U)
+/**< Max length for a netdev buffer  */
+#define OPENTHREAD_NETDEV_BUFLEN                            (IEEE802154_MAX_LENGTH)
+
 
 /**
  * @brief   Struct containing a serial message
  */
 typedef struct {
-    void *buf;  /**< buffer containing the message */
-    size_t len; /**< length of the message */
+    uint16_t length;                                        /**< length of the message */
+    uint16_t serial_buffer_status;                            /**< status of the buffer */
+    uint8_t buf[OPENTHREAD_SERIAL_BUFFER__PAYLOAD_SIZE];    /**< buffer containing the message */
 } serial_msg_t;
 
 /**
@@ -71,7 +103,7 @@ void recv_pkt(otInstance *aInstance, netdev_t *dev);
  * @param[in]  dev                pointer to a netdev interface
  * @param[in]  event              just occurred netdev event
  */
-void send_pkt(otInstance *aInstance, netdev_t *dev, netdev_event_t event);
+void sent_pkt(otInstance *aInstance, netdev_event_t event);
 
 /**
  * @brief   Bootstrap OpenThread
@@ -87,7 +119,6 @@ void openthread_bootstrap(void);
  */
 void openthread_radio_init(netdev_t *dev, uint8_t *tb, uint8_t *rb);
 
-
 /**
  * @brief   Starts OpenThread thread.
  *
@@ -100,24 +131,56 @@ void openthread_radio_init(netdev_t *dev, uint8_t *tb, uint8_t *rb);
  * @return  PID of OpenThread thread
  * @return  -EINVAL if there was an error creating the thread
  */
-int openthread_netdev_init(char *stack, int stacksize, char priority, const char *name, netdev_t *netdev);
+//int openthread_rx_init(char *stack, int stacksize, char priority, const char *name, netdev_t *netdev);
 
 /**
- * @brief   get PID of OpenThread thread.
+ * @brief   Starts OpenThread thread.
  *
- * @return  PID of OpenThread thread
+ * @param[in]  stack              pointer to the stack designed for OpenThread timer
+ * @param[in]  stacksize          size of the stack
+ * @param[in]  priority           priority of the OpenThread timer stack
+ * @param[in]  name               name of the OpenThread timer stack
+ *
+ * @return  PID of OpenThread event thread
+ * @return  -EINVAL if there was an error creating the thread
  */
-kernel_pid_t openthread_get_pid(void);
+int openthread_event_init(char *stack, int stacksize, char priority, const char *name);
+
+/**
+ * @brief   get PID of OpenThread main thread.
+ *
+ * @return  PID of OpenThread main thread
+ */
+kernel_pid_t openthread_get_main_pid(void);
+
+/**
+ * @brief   get PID of OpenThread Critical Event thread.
+ *
+ * @return  PID of OpenThread Critical Event thread
+ */
+kernel_pid_t openthread_get_event_pid(void);
+
+/**
+ * @brief   get instance of OpenThread.
+ *
+ * @return  instance of OpenThread thread
+ */
+otInstance* openthread_get_instance(void);
+
+/**
+ * @brief   get timer of OpenThread.
+ *
+ * @return  timer of OpenThread thread
+ */
+xtimer_t* openthread_get_timer(void);
+
+bool openthread_main_stack_overflow_check(void);
+bool openthread_event_stack_overflow_check(void);
 
 /**
  * @brief   Init OpenThread random
  */
 void ot_random_init(void);
-
-/*
- * @brief   Run OpenThread UART simulator (stdio)
- */
-void openthread_uart_run(void);
 
 /**
  * @brief   Execute OpenThread command. Call this function only in OpenThread thread

@@ -59,8 +59,18 @@ extern "C" {
             puts("Cannot debug, stack too small"); \
         } \
     } while (0)
+#define DEBUG_VPRINT(format, arg) \
+    do { \
+        if ((sched_active_thread == NULL) || (sched_active_thread->stack_size > THREAD_EXTRA_STACKSIZE_PRINTF)) { \
+            vprintf(format, arg); \
+        } \
+        else { \
+            puts("Cannot debug, stack too small"); \
+        } \
+    } while (0)
 #else
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
+#define DEBUG_VPRINT(format, arg) vprintf(format, arg)
 #endif
 
 /**
@@ -93,8 +103,10 @@ extern "C" {
  * @note Another name for ::DEBUG_PRINT
  */
 #define DEBUG(...) DEBUG_PRINT(__VA_ARGS__)
+#define DEBUG_V(format, arg) DEBUG_VPRINT(format, arg)
 #else
 #define DEBUG(...)
+#define DEBUG_V(format, arg)
 #endif
 /** @} */
 

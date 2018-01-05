@@ -61,7 +61,15 @@ static void _irq_handler(void *arg)
     netdev_t *dev = (netdev_t *) arg;
 
     if (dev->event_callback) {
+#if MODULE_OPENTHREAD
+        if (((at86rf2xx_t *) dev)->netdev.flags & AT86RF2XX_OPT_TELL_TX_END) {
+            dev->event_callback(dev, NETDEV_EVENT_ISR2);
+        } else {
+            dev->event_callback(dev, NETDEV_EVENT_ISR);
+        }
+#else
         dev->event_callback(dev, NETDEV_EVENT_ISR);
+#endif
     }
 }
 
@@ -595,6 +603,14 @@ static void _isr(netdev_t *netdev)
 	                dev->idle_state = AT86RF2XX_STATE_RX_AACK_ON;		
 				}
 #endif
+#endif
+#if MODULE_OPENTHREAD
+				/* Wake up for a while when receiving an ACK with pending bit */
+				if (trac_status == AT86RF2XX_TRX_STATE__TRAC_SUCCESS_DATA_PENDING) {
+	                dev->idle_state = AT86RF2XX_STATE_RX_AACK_ON;		      
+				} else {
+                    dev->idle_state = AT86RF2XX_STATE_SLEEP;		
+                }
 #endif
                 at86rf2xx_set_state(dev, dev->idle_state);
                 DEBUG("[at86rf2xx] return to state 0x%x\n", dev->idle_state);
