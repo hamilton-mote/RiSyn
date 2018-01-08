@@ -52,9 +52,12 @@ void luid_base(void *buf, size_t len)
     memset(buf, LUID_BACKUP_SEED, len);
 
 #ifdef HAS_FACTORY_BLOCK
-    memcpy(buf, fb_eui64, 8);
-#else
-#if CPUID_LEN
+    if (HAS_FACTORY_BLOCK) {
+        memcpy(buf, fb_eui64, 8);
+        return;
+    }
+#endif
+#ifdef CPUID_LEN
     uint8_t *out = (uint8_t *)buf;
     uint8_t cid[CPUID_LEN];
 
@@ -62,6 +65,5 @@ void luid_base(void *buf, size_t len)
     for (size_t i = 0; i < CPUID_LEN; i++) {
         out[i % len] ^= cid[i];
     }
-#endif
 #endif
 }
