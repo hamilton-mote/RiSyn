@@ -33,14 +33,16 @@ extern "C" {
 /**
  * @brief   External oscillator and clock configuration
  *
- * For selection of the used CORECLOCK, we have implemented two choices:
+ * For selection of the used CORECLOCK, we have implemented three choices:
  *
  * - usage of the PLL fed by the internal 8MHz oscillator divided by 8
+ * - usage of the DFLL fed by the internal ULP 32 kHz oscillator
  * - usage of the internal 8MHz oscillator directly, divided by N if needed
  *
  *
  * The PLL option allows for the usage of a wider frequency range and a more
- * stable clock with less jitter. This is why we use this option as default.
+ * stable clock with less jitter. But it consumes more power.
+ * We use this option for mains-powered node (no need to sleep).
  *
  * The target frequency is computed from the PLL multiplier and the PLL divisor.
  * Use the following formula to compute your values:
@@ -50,10 +52,18 @@ extern "C" {
  * NOTE: The PLL circuit does not run with less than 32MHz while the maximum PLL
  *       frequency is 96MHz. So PLL_MULL must be between 31 and 95!
  *
+ * The DFLL option (default option) can lead to a fast and accurate clocking
+ * and a low-power sleep mode (ULP 32 kHz clock). Use this option when you use 
+ * a battery-powered node. The actual core frequency is adjusted as follows:
+ *
+ * CORECLOCK = 48MHz / DIV
+ *
+ * NOTE: A core clock frequency below 1 MHz is not recommended
  *
  * The internal Oscillator used directly can lead to a slightly better power
- * efficiency to the cost of a less stable clock. Use this option when you know
- * what you are doing! The actual core frequency is adjusted as follows:
+ * efficiency to the cost of a less stable clock. It also provides a low-power
+ * sleep mode with the ULP 32 kHz clock. Use this option for a battery-powered
+ * node. The actual core frequency is adjusted as follows:
  *
  * CORECLOCK = 8MHz / DIV
  *
@@ -62,10 +72,16 @@ extern "C" {
  * @{
  */
 
+#ifndef CLOCK_USE_PLL
 #define CLOCK_USE_PLL       (0)
+#endif
 
 #ifndef CLOCK_USE_OSCULP32_DFLL
+#if CLOCK_USE_PLL
+#define CLOCK_USE_OSCULP32_DFLL       (0)
+#else
 #define CLOCK_USE_OSCULP32_DFLL       (1)
+#endif
 #endif
 
 #if CLOCK_USE_PLL
@@ -73,15 +89,16 @@ extern "C" {
 #define CLOCK_PLL_DIV       (1U)                // adjust to your need
 #define CLOCK_CORECLOCK     (((CLOCK_PLL_MUL + 1) * 1000000U) / CLOCK_PLL_DIV)
 #elif CLOCK_USE_OSCULP32_DFLL
-#define CLOCK_CORECLOCK      48000000U
-#define CLOCK_OSCULP32K      32768U
 #define CLOCK_8MHZ           (0)
 #define GEN2_ULP32K          (1)
-#else
-#define CLOCK_CORECLOCK      8000000U
-#define CLOCK_8MHZ           (1)
 #define CLOCK_DIV            (1)
+#define CLOCK_CORECLOCK      (48000000U / CLOCK_DIV)
+#define CLOCK_OSCULP32K      32768U
+#else
+#define CLOCK_8MHZ           (1)
 #define GEN2_ULP32K          (1)
+#define CLOCK_DIV            (1)
+#define CLOCK_CORECLOCK      (8000000U / CLOCK_DIV)
 #endif
 /** @} */
 
@@ -113,9 +130,15 @@ extern "C" {
  * @{
  */
 #define TIMER_NUMOF         (2U)
+#if CLOCK_USE_PLL
+#define TIMER_0_EN          1
+#define TIMER_1_EN          1
+#define TIMER_2_EN          0
+#else
 #define TIMER_0_EN          0
 #define TIMER_1_EN          1
 #define TIMER_2_EN          1
+#endif
 
 /* Timer 0 configuration */
 #define TIMER_0_DEV         TC3->COUNT16
@@ -257,7 +280,8 @@ static const spi_conf_t spi_config[] = {
 #define APDS9007_STABILIZATION_TIME 20000UL
 
 #define EKMB_PARAMS_BOARD    { .gpio = GPIO_PIN(PA,6 ) }
-#define PULSE_COUNTER_PARAMS_BOARD    { .gpio = GPIO_PIN(PA,18) }
+#define PULSE_COUNTER_PARAMS_BOARD    { .gpio = GPIO_PIN(PA,18), \
+                                        .gpio_flank = GPIO_FALLING }
 /** @} */
 
 /**
@@ -271,7 +295,11 @@ static const spi_conf_t spi_config[] = {
  * @name PM configuration
  * @{
  */
+#if CLOCK_USE_PLL /* PLL is used for wall-powered nodes */
+#define PM_BLOCKER_INITIAL { .val_u32 = 0x01010101 }
+#else
 #define PM_BLOCKER_INITIAL { .val_u32 = 0x00000000 }
+#endif
 /** @} */
 
 #ifdef __cplusplus
