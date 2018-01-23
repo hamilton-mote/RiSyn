@@ -39,6 +39,7 @@ volatile uint32_t _xtimer_high_cnt = 0;
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
 volatile uint32_t prev_s = 0xffffffff;
 volatile uint32_t prev_x = 0xffffffff;
+volatile bool xtimer_sync = false;
 #endif
 
 static inline void xtimer_spin_until(uint32_t value);
@@ -73,6 +74,7 @@ static inline void xtimer_spin_until(uint32_t target) {
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
     prev_s = _stimer_lltimer_now();
     prev_x = _xtimer_lltimer_now();
+    xtimer_sync = true;
 #endif
 }
 
@@ -88,6 +90,7 @@ void xtimer_init(void)
     timer_init(STIMER_DEV, STIMER_HZ, _periph_timer_callback, NULL);
     prev_s = _stimer_lltimer_now();
     prev_x = _xtimer_lltimer_now();
+    xtimer_sync = true;
 #endif
     /* register initial overflow tick */
     _lltimer_set(0xFFFFFFFF);
@@ -511,6 +514,7 @@ static void _timer_callback(void)
     now = reference;
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
     prev_x = now;
+    xtimer_sync = true;
 #endif
 
 overflow:
@@ -570,6 +574,7 @@ overflow:
         now = _xtimer_lltimer_now();
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
         prev_x = now;
+        xtimer_sync = true;
 #endif
         goto overflow;
     }
@@ -586,6 +591,7 @@ overflow:
             now = _xtimer_lltimer_now();
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
             prev_x = now;
+            xtimer_sync = true;
 #endif
             goto overflow;
         }
@@ -614,6 +620,7 @@ overflow:
             now = _xtimer_lltimer_now();
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
             prev_x = now;
+            xtimer_sync = true;
 #endif
             goto overflow;
         }
@@ -630,6 +637,7 @@ overflow:
                 now = _xtimer_lltimer_now();
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
                 prev_x = now;
+                xtimer_sync = true;
 #endif
                 goto overflow;
             }

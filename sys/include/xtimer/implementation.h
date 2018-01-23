@@ -36,6 +36,7 @@ extern volatile uint32_t _xtimer_high_cnt;
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
 extern volatile uint32_t prev_s;
 extern volatile uint32_t prev_x;
+extern volatile bool     xtimer_sync;
 #endif
 
 
@@ -79,14 +80,13 @@ static inline uint32_t _xtimer_lltimer_mask(uint32_t val)
  */
 uint64_t _xtimer_now64(void);
 int _xtimer_set_absolute(xtimer_t *timer, uint32_t target, uint32_t now);
-void _xtimer_set64(xtimer_t *timer, uint32_t offset, uint32_t long_offset);
 void _xtimer_set(xtimer_t *timer, uint32_t offset);
+void _xtimer_set64(xtimer_t *timer, uint32_t offset, uint32_t long_offset);
 void _xtimer_periodic_wakeup(uint32_t *last_wakeup, uint32_t period);
 void _xtimer_set_msg(xtimer_t *timer, uint32_t offset, msg_t *msg, kernel_pid_t target_pid);
 void _xtimer_set_msg64(xtimer_t *timer, uint64_t offset, msg_t *msg, kernel_pid_t target_pid);
 void _xtimer_set_wakeup(xtimer_t *timer, uint32_t offset, kernel_pid_t pid);
 void _xtimer_set_wakeup64(xtimer_t *timer, uint64_t offset, kernel_pid_t pid);
-void _xtimer_set(xtimer_t *timer, uint32_t offset);
 int _xtimer_msg_receive_timeout(msg_t *msg, uint32_t ticks);
 int _xtimer_msg_receive_timeout64(msg_t *msg, uint64_t ticks);
 
@@ -123,19 +123,22 @@ static inline uint32_t _xtimer_now(void)
     return latched_high_cnt | now;
 #else
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
-    uint64_t diff_s;
-    uint32_t now_s;
+    if (!xtimer_sync) {
+        prev_x = _xtimer_lltimer_now();
+        prev_s = _stimer_lltimer_now();
+        xtimer_sync = true;
+        return prev_x;
+    } else {
+        uint64_t diff_s;
+        uint32_t now_s;
     
-    do {
-        now_s = _stimer_lltimer_now();
-        if (now_s >= prev_s) {
+        do {
+            now_s  = _stimer_lltimer_now();
             diff_s = now_s - prev_s;
-        } else {
-            diff_s = (0xFFFFFFFF-prev_s) + now_s;
-        }
-    } while (diff_s < STIMER_HZ/XTIMER_HZ); 
+        } while (diff_s < STIMER_HZ/XTIMER_HZ); 
 
-    return _xtimer_lltimer_mask(prev_x + (uint32_t)(diff_s*XTIMER_HZ/STIMER_HZ));
+        return _xtimer_lltimer_mask(prev_x + (uint32_t)(diff_s*XTIMER_HZ/STIMER_HZ));
+    }
 #else
     return _xtimer_lltimer_now();
 #endif
@@ -177,6 +180,7 @@ static inline void _xtimer_spin(uint32_t offset) {
 #if (XTIMER_HZ < 1000000ul) && (STIMER_HZ >= 1000000ul)
     prev_x = _xtimer_lltimer_now();
     prev_s = _stimer_lltimer_now();
+    xtimer_sync = true;
 #endif
 }
 
