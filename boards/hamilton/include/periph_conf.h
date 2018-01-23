@@ -271,7 +271,7 @@ static const spi_conf_t spi_config[] = {
  * @name PM configuration
  * @{
  */
-#define PM_BLOCKER_INITIAL { .val_u32 = 0x00000000 }
+#define PM_BLOCKER_INITIAL { .val_u32 = 0x01010101 }
 /** @} */
 
 #ifdef __cplusplus
