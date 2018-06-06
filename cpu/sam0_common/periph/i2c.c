@@ -101,6 +101,17 @@ int i2c_init_master(i2c_t dev, i2c_speed_t speed)
             sercom_gclk_id_slow = I2C_0_GCLK_ID_SLOW;
             break;
 #endif
+#if I2C_1_EN
+        case I2C_1:
+            I2CSercom = &I2C_1_DEV;
+            pin_sda = I2C_1_SDA;
+            pin_scl = I2C_1_SCL;
+            mux = I2C_1_MUX;
+            clock_source_speed = CLOCK_CORECLOCK;
+            sercom_gclk_id = I2C_1_GCLK_ID;
+            sercom_gclk_id_slow = I2C_1_GCLK_ID_SLOW;
+            break;
+#endif
         default:
             DEBUG("I2C FALSE VALUE\n");
             return -1;
@@ -243,6 +254,11 @@ int i2c_read_bytes(i2c_t dev, uint8_t address, void *data, int length)
             i2c = &I2C_0_DEV;
             break;
 #endif
+#if I2C_1_EN
+        case I2C_1:
+            i2c = &I2C_1_DEV;
+            break;
+#endif
         default:
             return -1;
     }
@@ -273,6 +289,11 @@ int i2c_read_regs(i2c_t dev, uint8_t address, uint8_t reg, void *data, int lengt
 #if I2C_0_EN
         case I2C_0:
             i2c = &I2C_0_DEV;
+            break;
+#endif
+#if I2C_1_EN
+        case I2C_1:
+            i2c = &I2C_1_DEV;
             break;
 #endif
         default:
@@ -306,6 +327,11 @@ int i2c_write_bytes(i2c_t dev, uint8_t address, const void *data, int length)
             I2CSercom = &I2C_0_DEV;
             break;
 #endif
+#if I2C_1_EN
+        case I2C_1:
+            I2CSercom = &I2C_1_DEV;
+            break;
+#endif
         default:
             return -1;
     }
@@ -334,6 +360,11 @@ int i2c_write_regs(i2c_t dev, uint8_t address, uint8_t reg, const void *data, in
 #if I2C_0_EN
         case I2C_0:
             i2c = &I2C_0_DEV;
+            break;
+#endif
+#if I2C_1_EN
+        case I2C_1:
+            i2c = &I2C_1_DEV;
             break;
 #endif
         default:
@@ -374,6 +405,11 @@ void i2c_poweron(i2c_t dev)
             _i2c_poweron(&I2C_0_DEV);
             break;
 #endif
+#if I2C_1_EN
+        case I2C_1:
+            _i2c_poweron(&I2C_1_DEV);
+            break;
+#endif
         default:
             return;
     }
@@ -394,6 +430,11 @@ void i2c_poweroff(i2c_t dev)
 #if I2C_0_EN
         case I2C_0:
             _i2c_poweroff(&I2C_0_DEV);
+            break;
+#endif
+#if I2C_1_EN
+        case I2C_1:
+            _i2c_poweroff(&I2C_1_DEV);
             break;
 #endif
         default:

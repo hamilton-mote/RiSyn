@@ -212,9 +212,9 @@ static const spi_conf_t spi_config[] = {
  * @name I2C configuration
  * @{
  */
-#define I2C_NUMOF          (1U)
+#define I2C_NUMOF          (2U)
 #define I2C_0_EN            1
-#define I2C_1_EN            0
+#define I2C_1_EN            1
 #define I2C_2_EN            0
 #define I2C_3_EN            0
 #define I2C_IRQ_PRIO        1
@@ -229,6 +229,17 @@ static const spi_conf_t spi_config[] = {
 #define I2C_0_SDA           GPIO_PIN(PA, 16)
 #define I2C_0_SCL           GPIO_PIN(PA, 17)
 #define I2C_0_MUX           GPIO_MUX_D
+
+#define I2C_1_DEV           SERCOM0->I2CM
+#define I2C_1_IRQ           SERCOM0_IRQn
+#define I2C_1_ISR           isr_sercom0
+/* I2C 0 GCLK */
+#define I2C_1_GCLK_ID       SERCOM0_GCLK_ID_CORE
+#define I2C_1_GCLK_ID_SLOW  SERCOM0_GCLK_ID_SLOW
+/* I2C 0 pin configuration */
+#define I2C_1_SDA           GPIO_PIN(PA, 8)
+#define I2C_1_SCL           GPIO_PIN(PA, 9)
+#define I2C_1_MUX           GPIO_MUX_C
 /** @} */
 
 
