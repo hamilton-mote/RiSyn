@@ -49,7 +49,7 @@ static void ethos_isr(void *arg, uint8_t c);
 static const netdev_driver_t netdev_driver_ethos;
 
 static const uint8_t _esc_esc[] = {RETHOS_ESC_CHAR, RETHOS_LITERAL_ESC};
-static const uint8_t _start_frame[] = {RETHOS_ESC_CHAR, RETHOS_FRAME_START};
+//static const uint8_t _start_frame[] = {RETHOS_ESC_CHAR, RETHOS_FRAME_START};
 static const uint8_t _end_frame[] = {RETHOS_ESC_CHAR, RETHOS_FRAME_END};
 
 xtimer_t rexmit_timer;
