@@ -11,11 +11,9 @@
  * @{
  *
  * @file
- * @brief       Device driver implementation for the LSM3C 3D accelerometer/magnetometer.
+ * @brief       Device driver implementation for the LSM303C 3D accelerometer/magnetometer.
  *
  * @author      Michael Andersen <m.andersen@cs.berkeley.edu>
- * @author      Thomas Eichinger <thomas.eichinger@fu-berlin.de>
- * @author      Peter Kietzmann <peter.kietzmann@haw-hamburg.de>
  *
  * @}
  */
@@ -140,7 +138,7 @@ int lsm303c_read_mag(const lsm303c_t *dev, lsm303c_3d_data_t *data)
 
     /* trigger a conversion */
     i2c_write_reg(dev->i2c, dev->mag_address,
-                      (LSM303C_REG_CTRL3_M, LSM303C_CTRL3_M_SINGLE_CONV);
+                       LSM303C_REG_CTRL3_M, LSM303C_CTRL3_M_SINGLE_CONV);
 
     res = i2c_read_reg(dev->i2c, dev->mag_address,
                        LSM303C_REG_OUT_X_L_M, &tmp);
