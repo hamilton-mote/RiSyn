@@ -272,6 +272,10 @@ void auto_init(void)
     extern void auto_init_lsm303dlhc(void);
     auto_init_lsm303dlhc();
 #endif
+#ifdef MODULE_LSM303C
+    extern void auto_init_lsm303c(void);
+    auto_init_lsm303c();
+#endif
 #ifdef MODULE_EKMB
     extern void auto_init_ekmb(void);
     auto_init_ekmb();
