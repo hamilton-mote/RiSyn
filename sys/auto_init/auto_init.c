@@ -288,6 +288,10 @@ void auto_init(void)
     extern void auto_init_isl29020(void);
     auto_init_isl29020();
 #endif
+#ifdef MODULE_ISL29035
+    extern void auto_init_isl29035(void);
+    auto_init_isl29035();
+#endif
 #ifdef MODULE_L3G4200D
     extern void auto_init_l3g4200d(void);
     auto_init_l3g4200d();
