@@ -47,6 +47,7 @@ typedef enum {
     LSM303C_ACC_SAMPLE_RATE_200HZ            = 0x40, /**< 200Hz sample rate     */
     LSM303C_ACC_SAMPLE_RATE_400HZ            = 0x50, /**< 400Hz sample rate     */
     LSM303C_ACC_SAMPLE_RATE_800HZ            = 0x60, /**< 800Hz sample rate     */
+    LSM303C_ACC_SAMPLE_RATE_ONESHOT          = 0xFF  /**< Sample once per read call */
 } lsm303c_acc_sample_rate_t;
 
 /**
@@ -70,6 +71,7 @@ typedef enum {
     LSM303C_MAG_SAMPLE_RATE_20HZ     = 0x14, /**< 20  Hz sample rate */
     LSM303C_MAG_SAMPLE_RATE_40HZ     = 0x18, /**< 40  Hz sample rate */
     LSM303C_MAG_SAMPLE_RATE_80HZ     = 0x1c, /**< 80 Hz sample rate */
+    LSM303C_MAG_SAMPLE_RATE_ONESHOT  = 0xFF  /**< Sample once per read call */
 } lsm303c_mag_sample_rate_t;
 
 /**
@@ -88,7 +90,9 @@ typedef struct {
     i2c_t i2c;                          /**< I2C device                  */
     uint8_t acc_address;                /**< accelerometer's I2C address */
     uint8_t mag_address;                /**< magnetometer's I2C address  */
-    lsm303c_acc_scale_t acc_scale;   /**< accelerometer scale factor */
+    lsm303c_acc_scale_t acc_scale;      /**< accelerometer scale factor */
+    lsm303c_acc_sample_rate_t acc_sr;   /**< accelerometer sample rate */
+    lsm303c_mag_sample_rate_t mag_sr;   /**< magnetometer sample rate */
 } lsm303c_t;
 
 /**

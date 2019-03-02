@@ -38,6 +38,8 @@ int lsm303c_init(lsm303c_t *dev, i2c_t i2c,
     dev->acc_address = acc_address;
     dev->mag_address = mag_address;
     dev->acc_scale   = acc_scale;
+    dev->acc_sr = acc_sample_rate;
+    dev->mag_sr = mag_sample_rate;
 
     /* Acquire exclusive access to the bus. */
     i2c_acquire(dev->i2c);
@@ -49,6 +51,10 @@ int lsm303c_init(lsm303c_t *dev, i2c_t i2c,
     /* Release the bus for other threads. */
     i2c_release(dev->i2c);
     DEBUG("[OK]\n");
+
+    if (acc_sample_rate == LSM303C_ACC_SAMPLE_RATE_ONESHOT) {
+      acc_sample_rate = 0;
+    }
 
     /* configure accelerometer */
     /* enable all three axis and set sample rate */
@@ -64,21 +70,15 @@ int lsm303c_init(lsm303c_t *dev, i2c_t i2c,
     res += i2c_write_reg(dev->i2c, dev->acc_address,
                          LSM303C_REG_CTRL4_A, tmp);
 
-    /* configure magnetometer  */
-    res += i2c_write_reg(dev->i2c, dev->mag_address,
-                         LSM303C_REG_CTRL3_M, 0x0c);
-                         res += i2c_write_reg(dev->i2c, dev->mag_address,
-                                              LSM303C_REG_CTRL3_M, 0x60);
     /*  set sample rate */
     tmp = mag_sample_rate;
     res += i2c_write_reg(dev->i2c, dev->mag_address,
                          LSM303C_REG_CTRL1_M, tmp);
     /* set continuous mode */
-    tmp = LSM303C_CTRL3_M_SINGLE_CONV;
+    tmp = LSM303C_CTRL3_M_SINGLE_CONV | 0x20; //Enable low power
     res += i2c_write_reg(dev->i2c, dev->mag_address,
                          LSM303C_REG_CTRL3_M, tmp);
 
-                         res += i2c_write_reg(dev->i2c, dev->mag_address, LSM303C_REG_CTRL5_M, 0x40);
     i2c_release(dev->i2c);
     return (res < 5) ? -1 : 0;
 }
@@ -89,6 +89,26 @@ int lsm303c_read_acc(const lsm303c_t *dev, lsm303c_3d_data_t *data)
     uint8_t tmp;
 
     i2c_acquire(dev->i2c);
+
+    //If oneshot, turn the sensor on and wait for a measurement
+    if (dev->acc_sr == LSM303C_ACC_SAMPLE_RATE_ONESHOT) {
+      tmp = (LSM303C_CTRL1_A_XEN
+            | LSM303C_CTRL1_A_YEN
+            | LSM303C_CTRL1_A_ZEN
+            | LSM303C_ACC_SAMPLE_RATE_10HZ);
+      i2c_write_reg(dev->i2c, dev->acc_address, LSM303C_REG_CTRL1_A, tmp);
+      for (int i = 0; i < 10000; i++) {
+        res = i2c_read_reg(dev->i2c, dev->acc_address, LSM303C_REG_STATUS_A, &tmp);
+        if (res != 1) {
+          i2c_release(dev->i2c);
+          return -1;
+        }
+        if ((tmp & 8) != 0) {
+          break;
+        }
+      }
+    }
+
     i2c_read_reg(dev->i2c, dev->acc_address, LSM303C_REG_STATUS_A, &tmp);
     DEBUG("lsm303c status: %x\n", tmp);
     DEBUG("lsm303c: wait for acc values ... ");
@@ -111,6 +131,12 @@ int lsm303c_read_acc(const lsm303c_t *dev, lsm303c_3d_data_t *data)
     res += i2c_read_reg(dev->i2c, dev->acc_address,
                         LSM303C_REG_OUT_Z_H_A, &tmp);
     data->z_axis |= tmp<<8;
+
+    //If oneshot, turn the sensor off.
+    if (dev->acc_sr == LSM303C_ACC_SAMPLE_RATE_ONESHOT) {
+      i2c_write_reg(dev->i2c, dev->acc_address, LSM303C_REG_CTRL1_A, 0);
+    }
+
     i2c_release(dev->i2c);
     DEBUG("read ... ");
 
