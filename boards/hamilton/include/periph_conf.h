@@ -245,7 +245,7 @@ static const spi_conf_t spi_config[] = {
                                   .addr = 0x1e }
 
 #define TMP006_PARAMS_BOARD     { .i2c  = I2C_0, \
-                                  .addr = 0x44, \
+                                  .addr = 0x45, \
                                   .rate  = TMP006_CONFIG_CR_AS2 }
 #define TMP006_CONVERSION_TIME  550000UL
 #define TMP006_USE_LOW_POWER    (1)
