@@ -91,7 +91,7 @@ int isl29035_read(const isl29035_t *dev)
       case ISL29035_RANGE_4K:
         return (int) ((((uint32_t)res)*4000) >> 16);
       case ISL29035_RANGE_16K:
-        return (int) ((((uint32_t)res)*16000) >> 16);
+        return (int) ((((uint32_t)res)*16000) >> 14);
       case ISL29035_RANGE_64K:
         return (int) ((((uint32_t)res)*64000) >> 16);
       default:

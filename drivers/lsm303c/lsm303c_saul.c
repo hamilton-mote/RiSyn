@@ -29,10 +29,10 @@ static int read_acc(const void *dev, phydat_t *res)
     lsm303c_read_acc(d, (lsm303c_3d_data_t *)res);
 
     /* normalize result */
-    int fac = (1 << (d->acc_scale >> 4));
+  /*  int fac = (1 << (d->acc_scale >> 4));
     for (int i = 0; i < 3; i++) {
-        res->val[i] *= fac;
-    }
+  //      res->val[i] *= fac;
+}*/
 
     res->unit = UNIT_G;
     res->scale = -3;
@@ -45,11 +45,11 @@ static int read_mag(const void *dev, phydat_t *res)
 
     lsm303c_read_mag(d, (lsm303c_3d_data_t *)res);
 
-    for (int i = 0; i < 3; i++) {
+  /*  for (int i = 0; i < 3; i++) {
         int32_t tmp = res->val[i] * 580;
         tmp /= 1000;
         res->val[i] = (int16_t)tmp;
-    }
+    }*/
 
     res->unit = UNIT_GS;
     res->scale = -3;

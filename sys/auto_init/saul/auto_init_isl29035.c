@@ -49,7 +49,6 @@ extern saul_driver_t isl29035_saul_driver;
 
 void auto_init_isl29035(void)
 {
-    printf("ai called\n");
     for (unsigned int i = 0; i < ISL29035_NUM; i++) {
         const isl29035_params_t *p = &isl29035_params[i];
 

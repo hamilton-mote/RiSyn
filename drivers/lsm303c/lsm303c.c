@@ -140,9 +140,9 @@ int lsm303c_read_acc(const lsm303c_t *dev, lsm303c_3d_data_t *data)
     i2c_release(dev->i2c);
     DEBUG("read ... ");
 
-    data->x_axis = data->x_axis>>4;
-    data->y_axis = data->y_axis>>4;
-    data->z_axis = data->z_axis>>4;
+    // data->x_axis = data->x_axis>>4;
+    // data->y_axis = data->y_axis>>4;
+    // data->z_axis = data->z_axis>>4;
 
     if (res < 6) {
         DEBUG("[!!failed!!]\n");
